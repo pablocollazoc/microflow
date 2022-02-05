@@ -1,0 +1,6 @@
+---
+name: unit-tests-verify
+
+on:
+  pull-request:
+    branches: []

@@ -1,0 +1,6 @@
+---
+name: yamllint-verify
+
+on:
+  pull-request:
+    branches: []
