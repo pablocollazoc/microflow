@@ -12,19 +12,16 @@ services:
     networks:
       - sonarnet
 
-  sonarqube_execution:
+  maven_sonarscanner:
     depends_on:
       - sonarqube
-    image: sonarsource/sonar-scanner-cli
+    build:
+      context: .
+      dockerfile: maven_sonarscanner/Dockerfile
     volumes:
-      - ./:/app
+      - ${PROJECT_PATH}:/${PROJECT_PATH}
     networks:
       - sonarnet
-    environment:
-      - SONAR_HOST_URL=http://sonarqube:9000
-      - SONAR_LOGIN=admin
-      - SONAR_PASSWORD=admin
-      - SONAR_PROJECTKEY=sonarscanner
     restart: on-failure
 
 networks:
