@@ -20,9 +20,24 @@ services:
       dockerfile: maven_sonarscanner/Dockerfile
     volumes:
       - ${PROJECT_PATH}:/${PROJECT_PATH}
+    working_dir: /${PROJECT_PATH}
     networks:
       - sonarnet
     restart: on-failure
+    entrypoint:
+      [
+        "/wait-for-it.sh",
+        "sonarqube:9000",
+        "--strict",
+        "--",
+        "mvn",
+        "sonar:sonar",
+        "-Dsonar.projectKey=Devops-API",
+        "-Dsonar.host.url=http://sonarqube:9000",
+        "-Dsonar.scm.provider=git",
+        "-Dsonar.login=admin",
+        "-Dsonar.password=admin"
+      ]
 
 networks:
   sonarnet:
