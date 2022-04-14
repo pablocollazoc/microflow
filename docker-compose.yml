@@ -1,0 +1,48 @@
+version: "3"
+
+services:
+  sonarqube:
+    image: sonarqube:lts-community
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    ports:
+      - "9000:9000"
+    networks:
+      - sonarnet
+
+  maven_sonarscanner:
+    depends_on:
+      - sonarqube
+    build:
+      context: .
+      dockerfile: maven_sonarscanner/Dockerfile
+    volumes:
+      - ${PROJECT_PATH}:/${PROJECT_PATH}
+    working_dir: /${PROJECT_PATH}
+    networks:
+      - sonarnet
+    restart: on-failure
+    entrypoint:
+      [
+        "/wait-for-it.sh",
+        "sonarqube:9000",
+        "--strict",
+        "--",
+        "mvn",
+        "sonar:sonar",
+        "-Dsonar.projectKey=Devops-API",
+        "-Dsonar.host.url=http://sonarqube:9000",
+        "-Dsonar.scm.provider=git",
+        "-Dsonar.login=admin",
+        "-Dsonar.password=admin"
+      ]
+
+networks:
+  sonarnet:
+
+volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
