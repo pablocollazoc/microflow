@@ -21,13 +21,13 @@ jobs:
 
       - name: Copy project
         run: |
-          mkdir /home/runner/ci-agents && cp -r -p . /home/runner/ci-agents/
+          mkdir /home/runner/microflow && cp -r -p . /home/runner/microflow/
 
       - name: Checkout microflow project
         uses: actions/checkout@v3
 
       - name: Build the stack
-        run: docker-compose up -d
+        run: PROJECT_PATH=/home/runner/microflow docker-compose up -d
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4.3.0
