@@ -3,13 +3,34 @@ name: microflow-execution
 
 on:
   workflow_dispatch:
+    inputs:
+      autor_proyecto:
+        description: 'Autor/proyecto a analizar'
+        required: true
+        default: ''
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-      - name: Build the stack
-        run: docker-compose up -d
-      - name: Test
-        run: docker run sonarqube
+      - name: Checkout input project
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.inputs.autor_proyecto }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy project
+        run: |
+          mkdir /home/runner/microflow && cp -r -p . /home/runner/microflow/
+
+      - name: Checkout microflow project
+        uses: actions/checkout@v3
+
+      - name: Docker compose up
+        run: PROJECT_PATH=/home/runner/microflow docker-compose up
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4.3.0
+        with:
+          branch: ghpages
+          folder: build

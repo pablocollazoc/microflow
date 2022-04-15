@@ -1,4 +1,4 @@
-FROM maven:3.8.5
+FROM maven:3.8.5-jdk-8
 
 COPY ./maven_sonarscanner/wait-for-it.sh /${PROJECT_PATH}/wait-for-it.sh
 
