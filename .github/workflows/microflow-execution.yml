@@ -26,8 +26,8 @@ jobs:
       - name: Checkout microflow project
         uses: actions/checkout@v3
 
-      - name: Build the stack
-        run: PROJECT_PATH=/home/runner/microflow docker-compose up -d
+      - name: Docker compose up
+        run: PROJECT_PATH=/home/runner/microflow docker-compose up
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4.3.0
