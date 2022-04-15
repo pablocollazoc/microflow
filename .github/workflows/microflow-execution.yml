@@ -3,13 +3,28 @@ name: microflow-execution
 
 on:
   workflow_dispatch:
+    inputs:
+      autor_proyecto:
+        description: 'Autor/proyecto a analizar'
+        required: true
+        default: ''
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout input project
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.inputs.autor_proyecto }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy project
+        run: |
+          mkdir /home/runner/ci-agents && cp -p . /home/runner/ci-agents/
+
+      - name: Checkout microflow project
+        uses: actions/checkout@v3
+
       - name: Build the stack
         run: docker-compose up -d
-      - name: Test
-        run: docker run sonarqube
