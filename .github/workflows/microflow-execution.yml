@@ -31,9 +31,19 @@ jobs:
 
       - name: Retrieve scanner results
         run: |
-          if ($(docker container ps -f status=exited) != "") ;
-          then
-            
+          while [[ $(docker container ps -f status=exited) == "" ]];
+          do
+          done
+        
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+
+      - name: Get analysis results via SonarQube API
+        run: |
+          python maven_sonarscanner/generate-results.py
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4.3.0
