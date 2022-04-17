@@ -1,11 +1,38 @@
 #!/usr/bin/python
 
+import gviz_api
 import json
-from textwrap import indent
 
+from textwrap import indent
 from mdutils.mdutils import MdUtils
 from mdutils import Html
 from sonarqube import SonarQubeClient
+
+PAGE_TEMPLATE = """
+<html>
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+  <script>
+    google.charts.load("current", {packages:["corechart"]});
+    google.charts.setOnLoadCallback(drawPie);
+
+    function drawPie() {
+      %(jscode)s
+      var jscode_pie = new google.visualization.PieChart(document.getElementById('piechart_3d_div_jscode'));
+      jscode_pie.draw(jscode_data, {showRowNumber: true});
+
+      var json_pie = new google.visualization.PieChart(document.getElementById('piechart_3d_div_json'));
+      var json_data = new google.visualization.arrayToDataTable(%(json)s, 0.6);
+      json_pie.draw(json_data, {showRowNumber: true});
+    }
+  </script>
+  <body>
+    <H1>Table created using ToJSCode</H1>
+    <div id="piechart_3d_div_jscode"></div>
+    <H1>Table created using ToJSon</H1>
+    <div id="piechart_3d_div_json"></div>
+  </body>
+</html>
+"""
 
 class ResultsGenerator:
     def __init__(self):
@@ -57,6 +84,24 @@ class ResultsGenerator:
                     list_of_strings.extend([str(x), issues[y][x]["message"], issues[y][x]["severity"], "-", issues[y][x]["component"], issues[y][x]["line"]])
             mdFile.new_line()
             mdFile.new_table(columns=6, rows=len(issues[y]) + 1, text=list_of_strings, text_align='center')
+
+        description = {'Issue type', 'quantity'}
+        data = [
+            {'Bugs',     len(bugs_json)},
+          {'Code smells',      len(code_smells_json)},
+          {'Vulnerabilities',  len(vulnerabilities_json)}
+        ]
+
+        data_pie = gviz_api.DataTable(description)
+        data_pie.LoadData(data)
+
+        # Create a JavaScript code string.
+        jscode = data_pie.ToJSCode("jscode_data",
+                               columns_order=("Issue type", "quantity"))
+        # Create a JSON string.
+        json = data_pie.ToJSon(columns_order=("Issue type", "quantity"))
+
+        mdFile.new_paragraph("Content-type: text/html \n" + PAGE_TEMPLATE % vars())
         mdFile.create_md_file()
 
 if __name__ == "__main__":
