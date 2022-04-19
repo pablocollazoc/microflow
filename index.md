@@ -52,8 +52,6 @@ This GitHub page shows the analysis results for the requested flow execution for
 |0|Replace this persistent entity with a simple POJO or DTO object.|CRITICAL|10min|Devops-API:order-service/src/main/java/com/sivalabs/orderservice/web/controllers/OrderController.java|21|
 
 
-Content-type: text/html 
-
 <html>
   <script src="https://www.gstatic.com/charts/loader.js"></script>
   <script>
