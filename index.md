@@ -52,50 +52,52 @@ This GitHub page shows the analysis results for the requested flow execution for
 |0|Replace this persistent entity with a simple POJO or DTO object.|CRITICAL|10min|Devops-API:order-service/src/main/java/com/sivalabs/orderservice/web/controllers/OrderController.java|21|
 
 
+Content-type: text/html 
+
 <html>
   <script src="https://www.gstatic.com/charts/loader.js"></script>
   <script>
     
-google.charts.load("current", {packages:["corechart"]});
-    google.charts.setOnLoadCallback(drawPie);
+google.charts.load('current', {packages:['table']});
 
+    google.charts.setOnLoadCallback(drawTable);
     function 
-drawPie() {
+drawTable() {
       var jscode_data = new google.visualization.DataTable();
-jscode_data.addColumn("string", "Issue type", 
-"Issue type");
+jscode_data.addColumn("string", "Issue 
+type", "Issue type");
 jscode_data.addColumn("string", "quantity", "quantity");
 jscode_data.addRows(3);
-jscode_data.setCell(0, 
-0, "2");
-jscode_data.setCell(0, 1, "Bugs");
+
+jscode_data.setCell(0, 0, "Bugs");
+jscode_data.setCell(0, 1, "2");
 jscode_data.setCell(1, 0, "Code smells");
+
 jscode_data.setCell(1, 1, "26");
+jscode_data.setCell(2, 0, "Vulnerabilities");
+jscode_data.setCell(2, 1, "1");
 
-jscode_data.setCell(2, 0, "1");
-jscode_data.setCell(2, 1, "Vulnerabilities");
+      
+var jscode_table = new google.visualization.Table(document.getElementById('table_div_jscode'));
+      
+jscode_table.draw(jscode_data, {showRowNumber: true});
 
-      var jscode_pie = new 
-google.visualization.PieChart(document.getElementById('piechart_3d_div_jscode'));
-      jscode_pie.draw(jscode_data, 
-{showRowNumber: true});
-
-      var json_pie = new 
-google.visualization.PieChart(document.getElementById('piechart_3d_div_json'));
+      var json_table = new 
+google.visualization.Table(document.getElementById('table_div_json'));
       var json_data = new 
-google.visualization.arrayToDataTable({"cols":[{"id":"Issue type","label":"Issue 
-type","type":"string"},{"id":"quantity","label":"quantity","type":"string"}],"rows":[{"c":[{"v":"2"},{"v":"Bugs"}]},{"c":[{"v":"Code
- smells"},{"v":"26"}]},{"c":[{"v":"1"},{"v":"Vulnerabilities"}]}]}, 0.6);
-      json_pie.draw(json_data, {showRowNumber:
- true});
+google.visualization.DataTable({"cols":[{"id":"Issue type","label":"Issue 
+type","type":"string"},{"id":"quantity","label":"quantity","type":"string"}],"rows":[{"c":[{"v":"Bugs"},{"v":"2"}]},{"c":[{"v":"Code
+ smells"},{"v":"26"}]},{"c":[{"v":"Vulnerabilities"},{"v":"1"}]}]}, 0.6);
+      json_table.draw(json_data, 
+{showRowNumber: true});
     }
   </script>
   <body>
     <H1>Table created using ToJSCode</H1>
     <div 
-id="piechart_3d_div_jscode"></div>
+id="table_div_jscode"></div>
     <H1>Table created using ToJSon</H1>
-    <div id="piechart_3d_div_json"></div>
-  
-</body>
+    <div id="table_div_json"></div>
+  </body>
+
 </html>
