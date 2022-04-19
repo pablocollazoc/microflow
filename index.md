@@ -1,37 +1,96 @@
-## Welcome to GitHub Pages
 
-You can use the [editor on GitHub](https://github.com/pablocollazoc/microflow/edit/ghpages/index.md) to maintain and preview the content for your website in Markdown files.
+Analysis results forspring-boot-microservices-seriesproject
+===========================================================
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
 
-### Markdown
+This GitHub page shows the analysis results for the requested flow execution for spring-boot-microservices-seriesproject**Bugs found:*  
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+|Nº|Description|Severity|Estimated resolution time|File|Line|
+| :---: | :---: | :---: | :---: | :---: | :---: |
+|0|A "NullPointerException" could be thrown; "getBody()" can return null.|MAJOR|10min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/services/InventoryServiceClient.java|67|
+|1|Call "remove()" on "CORRELATION_ID".|MAJOR|10min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/utils/MyThreadLocalsHolder.java|4|
+**Code smells found:**  
 
-```markdown
-Syntax highlighted code block
+|Nº|Description|Severity|Estimated resolution time|File|Line|
+| :---: | :---: | :---: | :---: | :---: | :---: |
+|0|Remove this commented out code.|MAJOR|5min|Devops-API:shoppingcart-ui/pom.xml|53|
+|1|This block of commented-out lines of code should be removed.|MAJOR|5min|Devops-API:shoppingcart-ui/src/main/java/com/sivalabs/shoppingcartui/ShoppingcartUiApplication.java|6|
+|2|Remove this commented out code.|MAJOR|5min|Devops-API:catalog-service/pom.xml|26|
+|3|Rename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.|MINOR|2min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/web/controllers/ProductController.java|31|
+|4|Add at least one assertion to this test case.|BLOCKER|10min|Devops-API:oauth2-server/src/test/java/com/sivalabs/oauth2server/Oauth2ServerApplicationTests.java|13|
+|5|This block of commented-out lines of code should be removed.|MAJOR|5min|Devops-API:shoppingcart-ui/src/main/java/com/sivalabs/shoppingcartui/filters/AuthHeaderFilter.java|26|
+|6|This block of commented-out lines of code should be removed.|MAJOR|5min|Devops-API:shoppingcart-ui/src/main/java/com/sivalabs/shoppingcartui/filters/AuthHeaderFilter.java|39|
+|7|Remove this commented out code.|MAJOR|5min|Devops-API:zipkin-server/pom.xml|17|
+|8|Remove this commented out code.|MAJOR|5min|Devops-API:zipkin-server/pom.xml|26|
+|9|Add at least one assertion to this test case.|BLOCKER|10min|Devops-API:zipkin-server/src/test/java/com/sivalabs/zipkinserver/ZipkinServerApplicationTests.java|13|
+|10|This block of commented-out lines of code should be removed.|MAJOR|5min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/services/InventoryServiceClient.java|59|
+|11|Immediately return this expression instead of assigning it to the temporary variable "availableProducts".|MINOR|2min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/services/ProductService.java|31|
+|12|Add at least one assertion to this test case.|BLOCKER|10min|Devops-API:order-service/src/test/java/com/sivalabs/orderservice/OrderServiceApplicationTests.java|13|
+|13|Add at least one assertion to this test case.|BLOCKER|10min|Devops-API:shoppingcart-ui/src/test/java/com/sivalabs/shoppingcartui/ShoppingcartUiApplicationTests.java|13|
+|14|Complete the task associated to this TODO comment.|INFO|-|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/services/InventoryServiceClient.java|23|
+|15|Refactor your code to get this URI from a customizable parameter.|MINOR|20min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/services/InventoryServiceClient.java|24|
+|16|Provide the parametrized type for this generic.|MAJOR|5min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/utils/ContextCopyHystrixConcurrencyStrategy.java|20|
+|17|Add a private constructor to hide the implicit public one.|MAJOR|5min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/utils/MyThreadLocalsHolder.java|3|
+|18|Provide the parametrized type for this generic.|MAJOR|5min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/utils/MyThreadLocalsHolder.java|4|
+|19|Add at least one assertion to this test case.|BLOCKER|10min|Devops-API:hystrix-dashboard/src/test/java/com/sivalabs/hystrixdashboard/HystrixDashboardApplicationTests.java|13|
+|20|Provide the parametrized type for this generic.|MAJOR|5min|Devops-API:inventory-service/src/main/java/com/sivalabs/inventoryservice/web/controllers/InventoryController.java|33|
+|21|Provide the parametrized type for this generic.|MAJOR|5min|Devops-API:inventory-service/src/main/java/com/sivalabs/inventoryservice/web/controllers/InventoryController.java|35|
+|22|Add at least one assertion to this test case.|BLOCKER|10min|Devops-API:inventory-service/src/test/java/com/sivalabs/inventoryservice/InventoryServiceApplicationTests.java|13|
+|23|Add at least one assertion to this test case.|BLOCKER|10min|Devops-API:service-registry/src/test/java/com/sivalabs/serviceregistry/ServiceRegistryApplicationTests.java|13|
+|24|Add at least one assertion to this test case.|BLOCKER|10min|Devops-API:catalog-service/src/test/java/com/sivalabs/catalogservice/CatalogServiceApplicationTests.java|13|
+|25|Add at least one assertion to this test case.|BLOCKER|10min|Devops-API:config-server/src/test/java/com/sivalabs/configserver/ConfigServerApplicationTests.java|13|
+**Vulnerabilities found:**  
 
-# Header 1
-## Header 2
-### Header 3
+|Nº|Description|Severity|Estimated resolution time|File|Line|
+| :---: | :---: | :---: | :---: | :---: | :---: |
+|0|Replace this persistent entity with a simple POJO or DTO object.|CRITICAL|10min|Devops-API:order-service/src/main/java/com/sivalabs/orderservice/web/controllers/OrderController.java|21|
 
-- Bulleted
-- List
 
-1. Numbered
-2. List
+Content-type: text/html 
 
-**Bold** and _Italic_ and `Code` text
+<html>
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+  <script>
+    
+google.charts.load("current", {packages:["corechart"]});
+    google.charts.setOnLoadCallback(drawPie);
 
-[Link](url) and ![Image](src)
-```
+    function 
+drawPie() {
+      var jscode_data = new google.visualization.DataTable();
+jscode_data.addColumn("string", "Issue type", 
+"Issue type");
+jscode_data.addColumn("string", "quantity", "quantity");
+jscode_data.addRows(3);
+jscode_data.setCell(0, 
+0, "2");
+jscode_data.setCell(0, 1, "Bugs");
+jscode_data.setCell(1, 0, "26");
+jscode_data.setCell(1, 1, "Code smells");
 
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+jscode_data.setCell(2, 0, "1");
+jscode_data.setCell(2, 1, "Vulnerabilities");
 
-### Jekyll Themes
+      var jscode_pie = new 
+google.visualization.PieChart(document.getElementById('piechart_3d_div_jscode'));
+      jscode_pie.draw(jscode_data, 
+{showRowNumber: true});
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/pablocollazoc/microflow/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+      var json_pie = new 
+google.visualization.PieChart(document.getElementById('piechart_3d_div_json'));
+      var json_data = new 
+google.visualization.arrayToDataTable({"cols":[{"id":"Issue type","label":"Issue 
+type","type":"string"},{"id":"quantity","label":"quantity","type":"string"}],"rows":[{"c":[{"v":"2"},{"v":"Bugs"}]},{"c":[{"v":"26"},{"v":"Code
+ smells"}]},{"c":[{"v":"1"},{"v":"Vulnerabilities"}]}]}, 0.6);
+      json_pie.draw(json_data, {showRowNumber: true});
 
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+    }
+  </script>
+  <body>
+    <H1>Table created using ToJSCode</H1>
+    <div id="piechart_3d_div_jscode"></div>
+    
+<H1>Table created using ToJSon</H1>
+    <div id="piechart_3d_div_json"></div>
+  </body>
+</html>
