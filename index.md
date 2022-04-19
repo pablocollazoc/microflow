@@ -1,14 +1,18 @@
 
-Analysis results forspring-boot-microservices-seriesproject
-===========================================================
+Analysis results for spring-boot-microservices-series project
+=============================================================
 
 
-This GitHub page shows the analysis results for the requested flow execution for spring-boot-microservices-seriesproject**Bugs found:*  
+This GitHub page shows the analysis results for the requested flow execution for spring-boot-microservices-seriesproject
+
+**Bugs found:**  
 
 |Nº|Description|Severity|Estimated resolution time|File|Line|
 | :---: | :---: | :---: | :---: | :---: | :---: |
 |0|A "NullPointerException" could be thrown; "getBody()" can return null.|MAJOR|10min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/services/InventoryServiceClient.java|67|
 |1|Call "remove()" on "CORRELATION_ID".|MAJOR|10min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/utils/MyThreadLocalsHolder.java|4|
+
+
 **Code smells found:**  
 
 |Nº|Description|Severity|Estimated resolution time|File|Line|
@@ -39,6 +43,8 @@ This GitHub page shows the analysis results for the requested flow execution for
 |23|Add at least one assertion to this test case.|BLOCKER|10min|Devops-API:service-registry/src/test/java/com/sivalabs/serviceregistry/ServiceRegistryApplicationTests.java|13|
 |24|Add at least one assertion to this test case.|BLOCKER|10min|Devops-API:catalog-service/src/test/java/com/sivalabs/catalogservice/CatalogServiceApplicationTests.java|13|
 |25|Add at least one assertion to this test case.|BLOCKER|10min|Devops-API:config-server/src/test/java/com/sivalabs/configserver/ConfigServerApplicationTests.java|13|
+
+
 **Vulnerabilities found:**  
 
 |Nº|Description|Severity|Estimated resolution time|File|Line|
@@ -65,8 +71,8 @@ jscode_data.addRows(3);
 jscode_data.setCell(0, 
 0, "2");
 jscode_data.setCell(0, 1, "Bugs");
-jscode_data.setCell(1, 0, "26");
-jscode_data.setCell(1, 1, "Code smells");
+jscode_data.setCell(1, 0, "Code smells");
+jscode_data.setCell(1, 1, "26");
 
 jscode_data.setCell(2, 0, "1");
 jscode_data.setCell(2, 1, "Vulnerabilities");
@@ -80,17 +86,18 @@ google.visualization.PieChart(document.getElementById('piechart_3d_div_jscode'))
 google.visualization.PieChart(document.getElementById('piechart_3d_div_json'));
       var json_data = new 
 google.visualization.arrayToDataTable({"cols":[{"id":"Issue type","label":"Issue 
-type","type":"string"},{"id":"quantity","label":"quantity","type":"string"}],"rows":[{"c":[{"v":"2"},{"v":"Bugs"}]},{"c":[{"v":"26"},{"v":"Code
- smells"}]},{"c":[{"v":"1"},{"v":"Vulnerabilities"}]}]}, 0.6);
-      json_pie.draw(json_data, {showRowNumber: true});
-
+type","type":"string"},{"id":"quantity","label":"quantity","type":"string"}],"rows":[{"c":[{"v":"2"},{"v":"Bugs"}]},{"c":[{"v":"Code
+ smells"},{"v":"26"}]},{"c":[{"v":"1"},{"v":"Vulnerabilities"}]}]}, 0.6);
+      json_pie.draw(json_data, {showRowNumber:
+ true});
     }
   </script>
   <body>
     <H1>Table created using ToJSCode</H1>
-    <div id="piechart_3d_div_jscode"></div>
-    
-<H1>Table created using ToJSon</H1>
+    <div 
+id="piechart_3d_div_jscode"></div>
+    <H1>Table created using ToJSon</H1>
     <div id="piechart_3d_div_json"></div>
-  </body>
+  
+</body>
 </html>
