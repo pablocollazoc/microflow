@@ -2,7 +2,7 @@
 <html>
   <script src="https://www.gstatic.com/charts/loader.js"></script>
   <script>
-    google.charts.load('current', {packages:['corechart']});
+    google.charts.load('current', {packages:['table']});
 
     google.charts.setOnLoadCallback(drawTable);
     function drawTable() {
@@ -20,13 +20,9 @@ jscode_data.setCell(2, 1, 1);
       var jscode_table = new google.visualization.Table(document.getElementById('table_div_jscode'));
       jscode_table.draw(jscode_data, {showRowNumber: true});
 
-      var json_table = new google.visualization.PieChart(document.getElementById('table_div_json'));
-      var json_data = new google.visualization.DataTable({"cols":[{"id":"Issue type","label":"Issue type","type":"string"},{"id":"quantity","label":"Quantity","type":"number"}],"rows":[{"c":[{"v":"Bug"},{"v":2}]},{"c":[{"v":"Code smells"},{"v":26}]},{"c":[{"v":"Vulnerabilities"},{"v":1}]}]}, 0.6);
-      json_table.draw(json_data, {showRowNumber: true}, {is3D: true});
     }
   </script>
   <body>
     <div id="table_div_jscode"></div>
-    <div id="table_div_json"></div>
   </body>
 </html>
