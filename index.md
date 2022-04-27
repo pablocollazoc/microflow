@@ -28,7 +28,7 @@ All conditions passed:
   
 
 |Nº|Description|Severity|Estimated resolution time|File|Line|
-| :---: | :---: | :---: | :---: | :---: | :---: |
+| --- | --- | --- | --- | --- | --- |
 |0|Remove this commented out code.|MAJOR|5min|Devops-API:shoppingcart-ui/pom.xml|53|
 |1|This block of commented-out lines of code should be removed.|MAJOR|5min|Devops-API:shoppingcart-ui/src/main/java/com/sivalabs/shoppingcartui/ShoppingcartUiApplication.java|6|
 |2|Remove this commented out code.|MAJOR|5min|Devops-API:catalog-service/pom.xml|26|
