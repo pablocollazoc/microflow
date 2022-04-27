@@ -20,7 +20,7 @@ All conditions passed:
   
 
 |Nº|Description|Severity|Estimated resolution time|File|Line|
-| :---: | :---: | :---: | :---: | :---: | :---: |
+| --- | --- | --- | --- | --- | --- |
 |0|A "NullPointerException" could be thrown; "getBody()" can return null.|MAJOR|10min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/services/InventoryServiceClient.java|67|
 |1|Call "remove()" on "CORRELATION_ID".|MAJOR|10min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/utils/MyThreadLocalsHolder.java|4|
 
@@ -60,5 +60,5 @@ All conditions passed:
   
 
 |Nº|Description|Severity|Estimated resolution time|File|Line|
-| :---: | :---: | :---: | :---: | :---: | :---: |
+| --- | --- | --- | --- | --- | --- |
 |0|Replace this persistent entity with a simple POJO or DTO object.|CRITICAL|10min|Devops-API:order-service/src/main/java/com/sivalabs/orderservice/web/controllers/OrderController.java|21|
