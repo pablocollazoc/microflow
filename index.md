@@ -12,6 +12,8 @@ This GitHub page shows the analysis results for the requested flow execution for
 All conditions passed: 
 - No blocker issues 
 - Code coverage on new code greater than 80%
+# **Issue types distribution:**
+
 
 {% include charts.html %}
 # **Bugs found:**
