@@ -5,6 +5,8 @@ Analysis results for spring-boot-microservices-series project
 
 This GitHub page shows the analysis results for the requested flow execution for spring-boot-microservices-seriesproject
 
+{% include charts.html %}
+
 **Bugs found:**  
 
 |Nº|Description|Severity|Estimated resolution time|File|Line|
@@ -50,6 +52,3 @@ This GitHub page shows the analysis results for the requested flow execution for
 |Nº|Description|Severity|Estimated resolution time|File|Line|
 | :---: | :---: | :---: | :---: | :---: | :---: |
 |0|Replace this persistent entity with a simple POJO or DTO object.|CRITICAL|10min|Devops-API:order-service/src/main/java/com/sivalabs/orderservice/web/controllers/OrderController.java|21|
-
-
-{% include charts.html %}
