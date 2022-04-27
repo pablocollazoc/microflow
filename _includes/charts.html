@@ -2,7 +2,7 @@
 <html>
   <script src="https://www.gstatic.com/charts/loader.js"></script>
   <script>
-    google.charts.load('current', {packages:['table']});
+    google.charts.load('current', {packages:['corechart']});
 
     google.charts.setOnLoadCallback(drawTable);
     function drawTable() {
@@ -17,8 +17,8 @@ jscode_data.setCell(1, 1, 26);
 jscode_data.setCell(2, 0, "Vulnerabilities");
 jscode_data.setCell(2, 1, 1);
 
-      var jscode_table = new google.visualization.Table(document.getElementById('table_div_jscode'));
-      jscode_table.draw(jscode_data, {showRowNumber: true});
+      var jscode_table = new google.visualization.PieChart(document.getElementById('table_div_jscode'));
+      jscode_table.draw(jscode_data);
 
     }
   </script>
