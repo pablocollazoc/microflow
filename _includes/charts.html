@@ -8,27 +8,25 @@
     function drawTable() {
       var jscode_data = new google.visualization.DataTable();
 jscode_data.addColumn("string", "Issue type", "Issue type");
-jscode_data.addColumn("string", "quantity", "quantity");
+jscode_data.addColumn("number", "Quantity", "quantity");
 jscode_data.addRows(3);
-jscode_data.setCell(0, 0, "Bugs");
-jscode_data.setCell(0, 1, "2");
-jscode_data.setCell(1, 0, "26");
-jscode_data.setCell(1, 1, "Code smells");
-jscode_data.setCell(2, 0, "1");
-jscode_data.setCell(2, 1, "Vulnerabilities");
+jscode_data.setCell(0, 0, "Bug");
+jscode_data.setCell(0, 1, 2);
+jscode_data.setCell(1, 0, "Code smells");
+jscode_data.setCell(1, 1, 26);
+jscode_data.setCell(2, 0, "Vulnerabilities");
+jscode_data.setCell(2, 1, 1);
 
       var jscode_table = new google.visualization.Table(document.getElementById('table_div_jscode'));
       jscode_table.draw(jscode_data, {showRowNumber: true});
 
       var json_table = new google.visualization.Table(document.getElementById('table_div_json'));
-      var json_data = new google.visualization.DataTable({"cols":[{"id":"Issue type","label":"Issue type","type":"string"},{"id":"quantity","label":"quantity","type":"string"}],"rows":[{"c":[{"v":"Bugs"},{"v":"2"}]},{"c":[{"v":"26"},{"v":"Code smells"}]},{"c":[{"v":"1"},{"v":"Vulnerabilities"}]}]}, 0.6);
+      var json_data = new google.visualization.DataTable({"cols":[{"id":"Issue type","label":"Issue type","type":"string"},{"id":"quantity","label":"Quantity","type":"number"}],"rows":[{"c":[{"v":"Bug"},{"v":2}]},{"c":[{"v":"Code smells"},{"v":26}]},{"c":[{"v":"Vulnerabilities"},{"v":1}]}]}, 0.6);
       json_table.draw(json_data, {showRowNumber: true});
     }
   </script>
   <body>
-    <H1>Table created using ToJSCode</H1>
     <div id="table_div_jscode"></div>
-    <H1>Table created using ToJSon</H1>
     <div id="table_div_json"></div>
   </body>
 </html>
