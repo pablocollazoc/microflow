@@ -4,18 +4,26 @@ Analysis results for spring-boot-microservices-series project
 
 
 This GitHub page shows the analysis results for the requested flow execution for spring-boot-microservices-seriesproject
+# **Quality gate status:**
+
+
+***Passed*** :heavy_check_mark:
+
+All conditions passed: 
+- No blocker issues 
+- Code coverage on new code greater than 80%
 
 {% include charts.html %}
-
-**Bugs found:**  
+# **Bugs found:**
+  
 
 |Nº|Description|Severity|Estimated resolution time|File|Line|
 | :---: | :---: | :---: | :---: | :---: | :---: |
 |0|A "NullPointerException" could be thrown; "getBody()" can return null.|MAJOR|10min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/services/InventoryServiceClient.java|67|
 |1|Call "remove()" on "CORRELATION_ID".|MAJOR|10min|Devops-API:catalog-service/src/main/java/com/sivalabs/catalogservice/utils/MyThreadLocalsHolder.java|4|
 
-
-**Code smells found:**  
+# **Code smells found:**
+  
 
 |Nº|Description|Severity|Estimated resolution time|File|Line|
 | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -46,8 +54,8 @@ This GitHub page shows the analysis results for the requested flow execution for
 |24|Add at least one assertion to this test case.|BLOCKER|10min|Devops-API:catalog-service/src/test/java/com/sivalabs/catalogservice/CatalogServiceApplicationTests.java|13|
 |25|Add at least one assertion to this test case.|BLOCKER|10min|Devops-API:config-server/src/test/java/com/sivalabs/configserver/ConfigServerApplicationTests.java|13|
 
-
-**Vulnerabilities found:**  
+# **Vulnerabilities found:**
+  
 
 |Nº|Description|Severity|Estimated resolution time|File|Line|
 | :---: | :---: | :---: | :---: | :---: | :---: |
