@@ -229,7 +229,7 @@ jscode_data_reliability.setCell(39, 3, "1.0");
 jscode_data_reliability.setCell(39, 4, 0.0);
 
       var jscode_table = new google.visualization.BubbleChart(document.getElementById('buble_div_jscode'));
-      jscode_table.draw(jscode_data_reliability, {hAxis: {title: 'Lines of code'}}, {vAxis: {title: 'Remediation effort (in min)'}}, {colorAxis: {colors: ['green', 'red']}});
+      jscode_table.draw(jscode_data_reliability, {hAxis: {title: 'Lines of code'}}, {vAxis: {title: 'Remediation effort (in min)', textPosition: 'in'}}, {colorAxis: {colors: ['green', 'red']}});
 
     }
   </script>
