@@ -229,7 +229,7 @@ jscode_data_reliability.setCell(39, 3, "1.0");
 jscode_data_reliability.setCell(39, 4, 0.0);
 
       var jscode_table = new google.visualization.BubbleChart(document.getElementById('buble_div_jscode'));
-      jscode_table.draw(jscode_data_reliability, {hAxis: {title: 'Lines of code'}, vAxis: {title: 'Remediation effort (in min)'}, colors: ['red', 'orange', 'yellow', 'lime', 'darkgreen']});
+      jscode_table.draw(jscode_data_reliability, {title:'- Color: Reliability Rating (1.0 = A, 2.0 = B, 3.0 = C, 4.0 = D, 5.0 = E)   - Size: Bugs', hAxis: {title: 'Lines of code'}, vAxis: {title: 'Remediation effort (in min)'}, colors: ['red', 'orange', 'yellow', 'lime', 'darkgreen']});
 
     }
   </script>
