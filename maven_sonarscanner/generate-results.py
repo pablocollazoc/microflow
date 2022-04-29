@@ -22,11 +22,23 @@ page_template = """
 
       %(jscode_reliability)s
       var jscode_table = new google.visualization.BubbleChart(document.getElementById('buble_div_jscode'));
-      jscode_table.draw(jscode_data_reliability, {title:'- Color: Reliability Rating (1.0 = A, 2.0 = B, 3.0 = C, 4.0 = D, 5.0 = E)   - Size: Bugs', hAxis: {title: 'Lines of code'}, vAxis: {title: 'Remediation effort (in min)'}, colors: ['red', 'orange', 'yellow', 'lime', 'darkgreen']});
+      jscode_table.draw(jscode_data_reliability, {title:'- Color: Reliability Rating (1.0 = A, 2.0 = B, 3.0 = C, 4.0 = D, 5.0 = E)   - Size: Bugs', hAxis: {title: 'Lines of code'}, vAxis: {title: 'Remediation effort (in min)'}, colors: ['red', 'orange', 'yellow', 'lightgreen', 'darkgreen']});
 
       %(jscode_security)s
       var jscode_table = new google.visualization.BubbleChart(document.getElementById('buble_div_jscode_security'));
-      jscode_table.draw(jscode_data_security, {title:'- Color: Security Rating (1.0 = A, 2.0 = B, 3.0 = C, 4.0 = D, 5.0 = E)   - Size: Vulnerabilities', hAxis: {title: 'Lines of code'}, vAxis: {title: 'Remediation effort (in min)'}, colors: ['red', 'orange', 'yellow', 'lime', 'darkgreen']});
+      jscode_table.draw(jscode_data_security, {title:'- Color: Security Rating (1.0 = A, 2.0 = B, 3.0 = C, 4.0 = D, 5.0 = E)   - Size: Vulnerabilities', hAxis: {title: 'Lines of code'}, vAxis: {title: 'Remediation effort (in min)'}, colors: ['red', 'orange', 'yellow', 'lightgreen', 'darkgreen']});
+
+      %(jscode_maintainability)s
+      var jscode_table = new google.visualization.BubbleChart(document.getElementById('buble_div_jscode_maintainability'));
+      jscode_table.draw(jscode_data_maintainability, {title:'- Color: Maintainability Rating (1.0 = A, 2.0 = B, 3.0 = C, 4.0 = D, 5.0 = E)   - Size: Code smells', hAxis: {title: 'Lines of code'}, vAxis: {title: 'Maintainability effort (in min)'}, colors: ['red', 'orange', 'yellow', 'lightgreen', 'darkgreen']});
+    
+      %(jscode_coverage)s
+      var jscode_table = new google.visualization.BubbleChart(document.getElementById('buble_div_jscode_coverage'));
+      jscode_table.draw(jscode_data_coverage, {title:'- Size: Uncovered lines', hAxis: {title: 'Cyclomatic complexity'}, vAxis: {title: 'Coverage'}});
+
+      %(jscode_duplications)s
+      var jscode_table = new google.visualization.BubbleChart(document.getElementById('buble_div_jscode_duplications'));
+      jscode_table.draw(jscode_data_duplications, {title:'- Size: Duplicated Blocks', hAxis: {title: 'Lines of Code'}, vAxis: {title: 'Duplication Lines'}});
     }
   </script>
   <body>
@@ -36,6 +48,12 @@ page_template = """
     <div id="buble_div_jscode" style="width: 800px; height: 400px;"></div>
     <H1><strong>Security:</strong></H1>
     <div id="buble_div_jscode_security" style="width: 800px; height: 400px;"></div>
+    <H1><strong>Maintainability:</strong></H1>
+    <div id="buble_div_jscode_maintainability" style="width: 800px; height: 400px;"></div>
+    <H1><strong>Coverage:</strong></H1>
+    <div id="buble_div_jscode_coverage" style="width: 800px; height: 400px;"></div>
+    <H1><strong>Duplications:</strong></H1>
+    <div id="buble_div_jscode_duplications" style="width: 800px; height: 400px;"></div>
   </body>
 </html>
 """
@@ -72,6 +90,36 @@ class ResultsGenerator:
                                                                                       metricKeys="vulnerabilities,security_remediation_effort,security_rating,ncloc"))
         security = json.dumps(component_tree_security, indent=2)
         security = json.loads(security)
+
+        # Get maintainability measure values
+        component_tree_maintainability = list(self.sonar.measures.get_component_tree_with_specified_measures(component="Devops-API",
+                                                                                      metricSort="sqale_index",
+                                                                                      s="metric",
+                                                                                      asc="false",
+                                                                                      qualifiers="FIL",
+                                                                                      metricKeys="code_smells,sqale_index,sqale_rating,ncloc"))
+        maintainability = json.dumps(component_tree_maintainability, indent=2)
+        maintainability = json.loads(maintainability)
+
+        # Get coverage measure values
+        component_tree_coverage = list(self.sonar.measures.get_component_tree_with_specified_measures(component="Devops-API",
+                                                                                      metricSort="coverage",
+                                                                                      s="metric",
+                                                                                      asc="false",
+                                                                                      qualifiers="FIL",
+                                                                                      metricKeys="uncovered_lines,coverage,complexity"))
+        coverage = json.dumps(component_tree_coverage, indent=2)
+        coverage = json.loads(coverage)
+
+        # Get duplications measure values
+        component_tree_duplications = list(self.sonar.measures.get_component_tree_with_specified_measures(component="Devops-API",
+                                                                                      metricSort="duplicated_lines",
+                                                                                      s="metric",
+                                                                                      asc="false",
+                                                                                      qualifiers="FIL",
+                                                                                      metricKeys="duplicated_blocks,duplicated_lines,ncloc"))
+        duplications = json.dumps(component_tree_duplications, indent=2)
+        duplications = json.loads(duplications)
 
         # Get quality gate status
         qualitygates_status = self.sonar.qualitygates.get_project_qualitygates_status(projectKey="Devops-API")
@@ -179,6 +227,83 @@ class ResultsGenerator:
 
         # Create a JavaScript code string for security chart.
         jscode_security = data_table.ToJSCode("jscode_data_security", ["file_name", "Lines_of_code", "Security_remediation_effort", "security_rating", "vulnerabilities"])
+
+        # Maintainability chart creation
+        description = {"file_name": ("string", "File name"),
+                      "Lines_of_code": ("number", "Lines of code"),
+                      "sqale_index": ("number", "Maintainability remediation effort"),
+                      "sqale_rating": ("string", "Maintainability rating"),
+                      "code_smells": ("number", "Code smells")}
+
+        data = []
+        for y in maintainability:
+          for x in range(len(y["measures"])):
+            if y["measures"][x]["metric"] == "ncloc":
+              Lines_of_code_value = y["measures"][x]["value"]
+            elif y["measures"][x]["metric"] == "code_smells":
+              code_smells_value = y["measures"][x]["value"]
+            elif y["measures"][x]["metric"] == "sqale_index":
+              mantainability_remediation_effort_value = y["measures"][x]["value"]
+            elif y["measures"][x]["metric"] == "sqale_rating":
+              maintainability_rating_value = y["measures"][x]["value"]
+
+          data.append({"file_name": y["name"], "Lines_of_code": int(Lines_of_code_value), "sqale_index": int(mantainability_remediation_effort_value), "sqale_rating": maintainability_rating_value, "code_smells": float(code_smells_value)})
+
+        data_table = gviz_api.DataTable(description)
+        data_table.LoadData(data)
+
+        # Create a JavaScript code string for maintainability chart.
+        jscode_maintainability = data_table.ToJSCode("jscode_data_maintainability", ["file_name", "Lines_of_code", "sqale_index", "sqale_rating", "code_smells"])
+
+        # Coverage chart creation
+        description = {"file_name": ("string", "File name"),
+                      "uncovered_lines": ("number", "Uncovered lines in coverage"),
+                      "coverage": ("number", "Coverage"),
+                      "ID": ("string", "ID"),
+                      "complexity": ("number", "Complexity")}
+
+        data = []
+        for y in coverage:
+          for x in range(len(y["measures"])):
+            if y["measures"][x]["metric"] == "uncovered_lines":
+              uncovered_lines_value = y["measures"][x]["value"]
+            elif y["measures"][x]["metric"] == "coverage":
+              coverage_value = y["measures"][x]["value"]
+            elif y["measures"][x]["metric"] == "complexity":
+              complexity_value = y["measures"][x]["value"]
+
+          data.append({"file_name": y["name"], "uncovered_lines": int(uncovered_lines_value), "coverage": float(coverage_value), "ID": "", "complexity": int(complexity_value)})
+
+        data_table = gviz_api.DataTable(description)
+        data_table.LoadData(data)
+
+        # Create a JavaScript code string for coverage chart.
+        jscode_coverage = data_table.ToJSCode("jscode_data_coverage", ["file_name", "complexity", "coverage", "ID", "uncovered_lines"])
+
+        # Duplications chart creation
+        description = {"file_name": ("string", "File name"),
+                      "duplicated_blocks": ("number", "Duplicated blocks"),
+                      "duplicated_lines": ("number", "Duplicated lines"),
+                      "ID": ("string", "ID"),
+                      "Lines_of_code": ("number", "Lines of code")}
+
+        data = []
+        for y in duplications:
+          for x in range(len(y["measures"])):
+            if y["measures"][x]["metric"] == "duplicated_blocks":
+              duplicated_blocks_value = y["measures"][x]["value"]
+            elif y["measures"][x]["metric"] == "duplicated_lines":
+              duplicated_lines_value = y["measures"][x]["value"]
+            elif y["measures"][x]["metric"] == "ncloc":
+              Lines_of_code_value = y["measures"][x]["value"]
+
+          data.append({"file_name": y["name"], "Lines_of_code": int(Lines_of_code_value), "duplicated_blocks": int(duplicated_blocks_value), "ID": "", "duplicated_lines": int(duplicated_lines_value)})
+
+        data_table = gviz_api.DataTable(description)
+        data_table.LoadData(data)
+
+        # Create a JavaScript code string for duplications chart.
+        jscode_duplications = data_table.ToJSCode("jscode_data_duplications", ["file_name", "Lines_of_code", "duplicated_lines", "ID", "duplicated_blocks"])
 
         charts = open("charts.html","w+")
         charts.write(page_template % vars())
