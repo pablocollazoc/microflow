@@ -7,11 +7,9 @@ This GitHub page shows the analysis results for the requested flow execution for
 # **Quality gate status:**
 
 
-***Passed*** :heavy_check_mark:
+***Not passed*** :x:
 
-All conditions passed: 
-- No blocker issues 
-- Code coverage on new code greater than 80%
+Quality gate conditions do not passed. Check the related issues
 
 {% include charts.html %}
 # **Bugs found:**
