@@ -67,12 +67,12 @@ class ResultsGenerator:
 
         issues = []
 
-        component = self.sonar.components.get_project_component_and_ancestors("Devops-API")
+        component = self.sonar.components.get_project_component_and_ancestors("project")
         project_json = json.dumps(component, indent=2)
         project_json = json.loads(project_json)
 
         # Get reliability measure values
-        component_tree = list(self.sonar.measures.get_component_tree_with_specified_measures(component="Devops-API",
+        component_tree = list(self.sonar.measures.get_component_tree_with_specified_measures(component="project",
                                                                                       metricSort="reliability_remediation_effort",
                                                                                       s="metric",
                                                                                       asc="false",
@@ -82,7 +82,7 @@ class ResultsGenerator:
         reliability = json.loads(reliability)
 
         # Get security measure values
-        component_tree_security = list(self.sonar.measures.get_component_tree_with_specified_measures(component="Devops-API",
+        component_tree_security = list(self.sonar.measures.get_component_tree_with_specified_measures(component="project",
                                                                                       metricSort="security_remediation_effort",
                                                                                       s="metric",
                                                                                       asc="false",
@@ -92,7 +92,7 @@ class ResultsGenerator:
         security = json.loads(security)
 
         # Get maintainability measure values
-        component_tree_maintainability = list(self.sonar.measures.get_component_tree_with_specified_measures(component="Devops-API",
+        component_tree_maintainability = list(self.sonar.measures.get_component_tree_with_specified_measures(component="project",
                                                                                       metricSort="sqale_index",
                                                                                       s="metric",
                                                                                       asc="false",
@@ -102,7 +102,7 @@ class ResultsGenerator:
         maintainability = json.loads(maintainability)
 
         # Get coverage measure values
-        component_tree_coverage = list(self.sonar.measures.get_component_tree_with_specified_measures(component="Devops-API",
+        component_tree_coverage = list(self.sonar.measures.get_component_tree_with_specified_measures(component="project",
                                                                                       metricSort="coverage",
                                                                                       s="metric",
                                                                                       asc="false",
@@ -112,7 +112,7 @@ class ResultsGenerator:
         coverage = json.loads(coverage)
 
         # Get duplications measure values
-        component_tree_duplications = list(self.sonar.measures.get_component_tree_with_specified_measures(component="Devops-API",
+        component_tree_duplications = list(self.sonar.measures.get_component_tree_with_specified_measures(component="project",
                                                                                       metricSort="duplicated_lines",
                                                                                       s="metric",
                                                                                       asc="false",
@@ -122,24 +122,24 @@ class ResultsGenerator:
         duplications = json.loads(duplications)
 
         # Get quality gate status
-        qualitygates_status = self.sonar.qualitygates.get_project_qualitygates_status(projectKey="Devops-API")
+        qualitygates_status = self.sonar.qualitygates.get_project_qualitygates_status(projectKey="project")
         quality_gate_status = json.dumps(qualitygates_status, indent=2)
         quality_gate_status = json.loads(quality_gate_status)
 
         # Get found bugs
-        bugs = list(self.sonar.issues.search_issues(componentKeys="Devops-API", types="BUG"))
+        bugs = list(self.sonar.issues.search_issues(componentKeys="project", types="BUG"))
         bugs_json = json.dumps(bugs, indent=2)
         bugs_json = json.loads(bugs_json)
         issues.append(bugs_json)
 
         # Get found code smells
-        code_smells = list(self.sonar.issues.search_issues(componentKeys="Devops-API", types="CODE_SMELL"))
+        code_smells = list(self.sonar.issues.search_issues(componentKeys="project", types="CODE_SMELL"))
         code_smells_json = json.dumps(code_smells, indent=2)
         code_smells_json = json.loads(code_smells_json)
         issues.append(code_smells_json)
 
         # Get found vulnerabilities
-        vulnerabilities = list(self.sonar.issues.search_issues(componentKeys="Devops-API", types="VULNERABILITY"))
+        vulnerabilities = list(self.sonar.issues.search_issues(componentKeys="project", types="VULNERABILITY"))
         vulnerabilities_json = json.dumps(vulnerabilities, indent=2)
         vulnerabilities_json = json.loads(vulnerabilities_json)
         issues.append(vulnerabilities_json)
@@ -148,16 +148,41 @@ class ResultsGenerator:
         mdFile.new_paragraph("This GitHub page shows the analysis results for the requested flow execution for "
                                + project_json["component"]["name"] + "project")
 
-        # QUality Gate result
+        # Quality Gate result
         mdFile.new_header(1, '**Quality gate status:**')
         if quality_gate_status["projectStatus"]["status"] == "OK":
           mdFile.new_paragraph('***Passed*** :heavy_check_mark:')
           mdFile.new_paragraph("All conditions passed: \n"
                                 "- No blocker issues \n"
-                                "- Code coverage on new code greater than 80%")
+                                "- Code coverage is greater than 80% \n"
+                                "- Duplicated lines is less than 3% \n"
+                                "- Maintainability rating is A \n"
+                                "- Reliability rating is A \n"
+                                "- Security hotspots reviewed is 100% \n"
+                                "- Security rating is A \n")
         else:
           mdFile.new_paragraph('***Not passed*** :x:')
-          mdFile.new_paragraph("Quality gate conditions do not passed. Check the related issues")
+          mdFile.new_paragraph("Quality gate conditions do not passed. Some of these conditions were not acquired: \n"
+                                "- Code coverage is less than 80% \n"
+                                "- Duplicated lines is greater than 3% \n"
+                                "- Maintainability rating is worse than A \n"
+                                "- Reliability rating is worse than A \n"
+                                "- Security hotspots reviewed is less than 100% \n"
+                                "- Security rating is worse than A \n")
+
+        #Technical debt
+        technical_debt = 0
+        for y in range(len(issues)):
+          for x in range(len(issues[y])):
+              if "effort" in issues[y][x].keys():
+                  technical_debt += int(issues[y][x]["effort"].strip("min"))
+
+        hour = technical_debt // 60
+        min = technical_debt % 60
+        
+        print(str(hour) + " " + str(min))
+        
+        mdFile.new_header(1, '**Technical debt:** ' + str(hour) + "h " + str(min) + "min")
 
         # Pie chart creation
         description = {"Issue type": ("string", "Issue type"),
