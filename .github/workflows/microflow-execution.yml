@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Docker compose up
-        run: PROJECT_PATH=/home/runner/microflow docker-compose up
+        run: PROJECT_PATH=/home/runner/microflow docker-compose up -d
 
       - name: Retrieve scanner results
         run: |
