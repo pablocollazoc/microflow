@@ -31,8 +31,7 @@ jobs:
 
       - name: Retrieve scanner results
         run: |
-          while [[ $(docker container ps -f status=exited) == "" ]];
-          do
+          while [[ $(docker container ps -f status=exited) == "" ]]; do
           done
         
       - name: setup python
