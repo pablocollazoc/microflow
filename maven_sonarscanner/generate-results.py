@@ -60,7 +60,7 @@ page_template = """
 
 class ResultsGenerator:
     def __init__(self):
-        sonar = SonarQubeClient(sonarqube_url="http://sonarqube:9000", username='admin', password='admin')
+        sonar = SonarQubeClient(sonarqube_url="http://localhost:9000", username='admin', password='admin')
         self.sonar = sonar
 
     def generate_results(self):
