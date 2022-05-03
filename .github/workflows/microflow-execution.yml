@@ -60,8 +60,8 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          mv -i /home/runner/results_markdown.md index.md
-          mv -i /home/runner/charts.html _includes/charts.html
+          mv -f -i /home/runner/results_markdown.md index.md
+          mv -f -i /home/runner/charts.html _includes/charts.html
           git add index.md _includes/charts.html
           git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
           git push
