@@ -60,7 +60,7 @@ page_template = """
 
 class ResultsGenerator:
     def __init__(self):
-        sonar = SonarQubeClient(sonarqube_url="http://localhost:9000", username='admin', password='sonar')
+        sonar = SonarQubeClient(sonarqube_url="http://sonarqube:9000", username='admin', password='admin')
         self.sonar = sonar
 
     def generate_results(self):
@@ -179,8 +179,6 @@ class ResultsGenerator:
 
         hour = technical_debt // 60
         min = technical_debt % 60
-        
-        print(str(hour) + " " + str(min))
         
         mdFile.new_header(1, '**Technical debt:** ' + str(hour) + "h " + str(min) + "min")
 

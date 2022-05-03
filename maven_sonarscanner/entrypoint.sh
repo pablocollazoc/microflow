@@ -1,5 +1,4 @@
 #!/bin/bash
-
 /wait-for-it.sh sonarqube:9000 --strict -- \
     sleep 20
     curl -X POST -u admin:admin -d "name=custom" http://sonarqube:9000/api/qualitygates/create
