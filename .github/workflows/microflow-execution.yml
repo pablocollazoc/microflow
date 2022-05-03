@@ -36,20 +36,32 @@ jobs:
           done
         
       - name: setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: 3.8
+          cache: 'pip'
 
+      - name: Install python dependencies
+        run: pip install -r requirements.txt
 
       - name: Get analysis results via SonarQube API
         run: |
           python maven_sonarscanner/generate-results.py
+          cp results_markdown.md /home/runner/results_markdown.md
+          cp charts.html /home/runner/charts.html
 
-      - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4.3.0
+      - name: Checkout to ghpages branch
+        uses: actions/checkout@v3
         with:
-          branch: ghpages
-          folder: build
+          ref: ghpages
+
+      - name: Update github page
+        run: |
+          mv -i /home/runner/results_markdown.md index.md
+          mv -i /home/runner/charts.html _includes/charts.html
+          git add index.md _includes/charts.html
+          git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
+          git push --no-verify -u origin ghpages
 
       - name: Docker compose down
         run: docker-compose down
