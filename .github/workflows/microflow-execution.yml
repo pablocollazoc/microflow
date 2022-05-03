@@ -57,11 +57,14 @@ jobs:
 
       - name: Update github page
         run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
           mv -i /home/runner/results_markdown.md index.md
           mv -i /home/runner/charts.html _includes/charts.html
           git add index.md _includes/charts.html
           git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
-          git push --no-verify -u origin ghpages
+          git push
 
       - name: Docker compose down
         run: docker-compose down
