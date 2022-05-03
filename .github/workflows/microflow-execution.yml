@@ -66,5 +66,8 @@ jobs:
           git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
           git push
 
+      - name: Checkout microflow project
+        uses: actions/checkout@v3
+
       - name: Docker compose down
         run: docker-compose down
