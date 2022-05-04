@@ -13,6 +13,7 @@ services:
       - sonarnet
 
   maven_sonarscanner:
+    container_name: maven_sonarscanner
     depends_on:
       - sonarqube
     build:
