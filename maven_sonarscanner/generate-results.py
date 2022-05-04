@@ -126,7 +126,7 @@ class ResultsGenerator:
         quality_gate_status = json.dumps(qualitygates_status, indent=2)
         quality_gate_status = json.loads(quality_gate_status)
         print(quality_gate_status)
-        p = self.sonar.qualitygates.get_quality_gate_of_project(projectKey="project")
+        p = self.sonar.qualitygates.get_quality_gate_of_project(project="project")
         print(p)
 
         # Get found bugs
