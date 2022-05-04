@@ -13,6 +13,7 @@ services:
       - sonarnet
 
   maven_sonarscanner:
+    container_name: maven_sonarscanner
     depends_on:
       - sonarqube
     build:
@@ -24,23 +25,7 @@ services:
     networks:
       - sonarnet
     restart: on-failure
-    entrypoint:
-      [
-        "/wait-for-it.sh",
-        "sonarqube:9000",
-        "--strict",
-        "--",
-        "mvn",
-        "clean",
-        "verify",
-        "-DskipTests",
-        "sonar:sonar",
-        "-Dsonar.projectKey=Devops-API",
-        "-Dsonar.host.url=http://sonarqube:9000",
-        "-Dsonar.scm.provider=git",
-        "-Dsonar.login=admin",
-        "-Dsonar.password=admin"
-      ]
+    entrypoint: /entrypoint.sh
 
 networks:
   sonarnet:
