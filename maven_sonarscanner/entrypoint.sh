@@ -3,7 +3,6 @@
     sleep 60
     curl -X POST -u admin:admin -d "name=custom" http://sonarqube:9000/api/qualitygates/create
     curl -X POST -u admin:admin -d "name=custom" http://sonarqube:9000/api/qualitygates/set_as_default
-    curl -X GET -u admin:admin http://sonarqube:9000/api/qualitygates/list
     curl -X POST -u admin:admin -d "gateName=custom&metric=coverage&op=LT&error=80" http://sonarqube:9000/api/qualitygates/create_condition
     curl -X POST -u admin:admin -d "gateName=custom&metric=duplicated_lines_density&op=GT&error=3" http://sonarqube:9000/api/qualitygates/create_condition
     curl -X POST -u admin:admin -d "gateName=custom&metric=sqale_rating&op=GT&error=1" http://sonarqube:9000/api/qualitygates/create_condition
