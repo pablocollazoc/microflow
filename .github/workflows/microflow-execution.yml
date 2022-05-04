@@ -31,7 +31,6 @@ jobs:
 
       - name: Retrieve scanner results
         run: |
-          docker logs maven_sonarscanner
           while [[ $(docker container ps -q -f status=exited) == "" ]]; do
             true
           done
