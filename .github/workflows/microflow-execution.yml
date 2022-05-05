@@ -10,7 +10,7 @@ on:
         default: ''
 
 jobs:
-  test:
+  sonarqube-scanner:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout input project
@@ -72,3 +72,11 @@ jobs:
 
       - name: Docker compose down
         run: docker-compose down -v
+
+  checkstyle-spotbugs:
+    runs-on: ubuntu-20.04
+      steps:
+        - name: Checkstyle execution
+          run: |
+            docker run maven:3.8.5-jdk-8 mvn checkstyle:checkstyle-aggregate
+            # generacion de reporte de checkstyle en root/target/site/checkstyle.html
