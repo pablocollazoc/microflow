@@ -50,10 +50,10 @@ jobs:
           cp results_markdown.md /home/runner/results_markdown.md
           cp charts.html /home/runner/charts.html
 
-      - name: Checkout to ghpages branch
+      - name: Checkout to gh-pages branch
         uses: actions/checkout@v3
         with:
-          ref: ghpages
+          ref: gh-pages
 
       - name: Update github page
         continue-on-error: true
