@@ -47,25 +47,17 @@ jobs:
       - name: Get analysis results via SonarQube API
         run: |
           python maven_sonarscanner/generate-results.py
-          cp results_markdown.md /home/runner/results_markdown.md
-          cp charts.html /home/runner/charts.html
+          mkdir scanner_results
+          mv results_markdown.md scanner_results/
+          mv charts.html scanner_results/
 
-      - name: Checkout to ghpages branch
-        uses: actions/checkout@v3
+      - name: Cache scanner results
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-scanner
         with:
-          ref: ghpages
-
-      - name: Update github page
-        continue-on-error: true
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-          mv -f /home/runner/results_markdown.md index.md
-          mv -f /home/runner/charts.html _includes/charts.html
-          git add index.md _includes/charts.html
-          git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
-          git push
+          path: scanner_results
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('charts.html') }}
 
       - name: Checkout microflow project
         uses: actions/checkout@v3
@@ -75,8 +67,67 @@ jobs:
 
   checkstyle-spotbugs:
     runs-on: ubuntu-20.04
-      steps:
-        - name: Checkstyle execution
-          run: |
-            docker run maven:3.8.5-jdk-8 mvn checkstyle:checkstyle-aggregate
-            # generacion de reporte de checkstyle en root/target/site/checkstyle.html
+    steps:
+      - name: Checkstyle execution and result publishing
+        run: |
+          docker run maven:3.8.5-jdk-8 mvn checkstyle:checkstyle-aggregate
+          mkdir checkstyle_results
+          mv -f ./target/site/checkstyle-aggregate.html checkstyle_results/
+
+      - name: Cache scanner results
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-checkstyle
+        with:
+          path: checkstyle_results
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./target/site/checkstyle-aggregate.html) }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+  web-update:
+    runs-on: ubuntu-20.04
+    needs: [sonarqube-scanner, checkstyle-spotbugs]
+    steps:
+      - name: Checkout to ghpages branch
+        uses: actions/checkout@v3
+        with:
+          ref: ghpages
+
+      - name: Cache results Sonar scanner
+        id: cache-results-scanner
+        uses: actions/cache@v2
+        with:
+          path: scanner_results
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('charts.html') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Cache results checkstyle
+        id: cache-results-checkstyle
+        uses: actions/cache@v2
+        with:
+          path: checkstyle_results
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./target/site/checkstyle-aggregate.html) }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Update github page
+        continue-on-error: true
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          mv -f scanner_results/results_markdown.md index.md
+          mv -f scanner_results/charts.html _includes/charts.html
+          mv -f checkstyle_results/checkstyle/target/site/checkstyle-aggregate.html checkstyle-aggregate.html
+
+          git add index.md _includes/charts.html checkstyle-aggregate.html
+          git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
+
+          git push
