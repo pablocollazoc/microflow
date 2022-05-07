@@ -143,7 +143,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: checkstyle_results
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./target/site/checkstyle-aggregate.html) }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./target/site/checkstyle-aggregate.html') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
