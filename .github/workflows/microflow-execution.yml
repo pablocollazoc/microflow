@@ -90,9 +90,8 @@ jobs:
 
       - name: Checkstyle execution and result publishing
         run: |
-          ls -a
-          ls project
-          docker run maven:3.8.5-jdk-8 mvn checkstyle:checkstyle-aggregate -f project
+          cd project
+          docker run --rm --workdir /app --mount type=bind,src="$(pwd)",dst=/app maven:3.8.5-jdk-8 sh -c "mvn checkstyle:checkstyle-aggregate"
           mkdir checkstyle_results
           mv -f ./project/target/site/checkstyle-aggregate.html checkstyle_results/
 
