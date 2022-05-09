@@ -41,7 +41,7 @@ jobs:
           name: project
 
       - name: Unzip project
-        run: unzip -q project.zip
+        run: unzip -v project.zip
 
       - name: Docker compose up
         run: PROJECT_PATH=./project docker-compose up -d
@@ -95,7 +95,7 @@ jobs:
           name: project
 
       - name: Unzip project
-        run: unzip -q project.zip
+        run: unzip -v project.zip
 
       - name: Checkstyle execution and result publishing
         run: |
@@ -134,7 +134,7 @@ jobs:
           name: checkstyle_results
 
       - name: Unzip results
-        run: unzip -q scanner_results.zip checkstyle_results.zip
+        run: unzip -v scanner_results.zip checkstyle_results.zip
 
       - name: Update github page
         continue-on-error: true
