@@ -19,10 +19,13 @@ jobs:
           repository: ${{ github.event.inputs.autor_proyecto }}
           token: ${{ secrets.GITHUB_TOKEN }}
       
+      - name: Zip project
+        run: zip -r project.zip .
+
       - uses: actions/upload-artifact@v3
         with:
           name: project
-          path: .
+          path: project.zip
 
   sonarqube-scanner:
     runs-on: ubuntu-20.04
@@ -36,6 +39,9 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: project
+
+      - name: Unzip project
+        run: unzip project.zip
 
       - name: Docker compose up
         run: PROJECT_PATH=./project docker-compose up -d
@@ -62,11 +68,14 @@ jobs:
           mv results_markdown.md scanner_results/
           mv charts.html scanner_results/
 
+      - name: Zip scanner results
+        run: zip -r scanner_results.zip scanner_results
+
       - name: Save scanner results
         uses: actions/upload-artifact@v3
         with:
           name: scanner_results
-          path: scanner_results
+          path: scanner_results.zip
 
       - name: Docker compose down
         run: docker-compose down -v
@@ -85,16 +94,22 @@ jobs:
         with:
           name: project
 
+      - name: Unzip project
+        run: unzip project.zip
+
       - name: Checkstyle execution and result publishing
         run: |
           docker run maven:3.8.5-jdk-8 mvn checkstyle:checkstyle-aggregate -f project
           mkdir checkstyle_results
-          mv -f .project/target/site/checkstyle-aggregate.html checkstyle_results/
+          mv -f ./project/target/site/checkstyle-aggregate.html checkstyle_results/
+
+      - name: Zip checkstyle results
+        run: zip -r checkstyle_results.zip checkstyle_results
 
       - name: Save scanner results
         uses: actions/upload-artifact@v3
         with:
-          path: checkstyle_results
+          path: checkstyle_results.zip
           name: checkstyle_results
 
   web-update:
@@ -117,6 +132,9 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: checkstyle_results
+
+      - name: Unzip results
+        run: unzip scanner_results.zip checkstyle_results.zip
 
       - name: Update github page
         continue-on-error: true
