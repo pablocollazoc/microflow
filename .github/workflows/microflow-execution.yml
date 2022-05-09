@@ -96,6 +96,8 @@ jobs:
 
       - name: Unzip project
         run: unzip -v project.zip
+          ls
+          cd project
 
       - name: Checkstyle execution and result publishing
         run: |
