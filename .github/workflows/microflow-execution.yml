@@ -20,7 +20,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add project to directory
-        run: mkdir --parents ./project; mv * $_
+        run: mkdir ../project && mv * ../project && mv ../project .
 
       - uses: actions/upload-artifact@v3
         with:
