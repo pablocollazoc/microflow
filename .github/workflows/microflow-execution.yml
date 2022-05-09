@@ -19,10 +19,13 @@ jobs:
           repository: ${{ github.event.inputs.autor_proyecto }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Add project to directory
+        run: mkdir --parents ./project; mv * $_
+
       - uses: actions/upload-artifact@v3
         with:
           name: project
-          path: project
+          path: ./project
 
   sonarqube-scanner:
     runs-on: ubuntu-20.04
