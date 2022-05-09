@@ -19,7 +19,7 @@ jobs:
           repository: ${{ github.event.inputs.autor_proyecto }}
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: project
           path: .
@@ -31,19 +31,14 @@ jobs:
       - name: Checkout microflow project
         uses: actions/checkout@v3
 
-      - name: Cache project
-        id: cache-project
-        uses: actions/cache@v2
+      - name: Get project
+        id: get-project
+        uses: actions/download-artifact@v3
         with:
-          path: .
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+          name: project
 
       - name: Docker compose up
-        run: PROJECT_PATH=. docker-compose up -d
+        run: PROJECT_PATH=./project docker-compose up -d
 
       - name: Retrieve scanner results
         run: |
@@ -67,13 +62,11 @@ jobs:
           mv results_markdown.md scanner_results/
           mv charts.html scanner_results/
 
-      - name: Cache scanner results
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-scanner
+      - name: Save scanner results
+        uses: actions/upload-artifact@v3
         with:
+          name: scanner_results
           path: scanner_results
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('charts.html') }}
 
       - name: Docker compose down
         run: docker-compose down -v
@@ -86,34 +79,23 @@ jobs:
       - name: Checkout microflow project
         uses: actions/checkout@v3
 
-      - name: Cache project
-        id: cache-project
-        uses: actions/cache@v2
+      - name: Get project
+        id: get-project
+        uses: actions/download-artifact@v3
         with:
-          path: .
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+          name: project
 
       - name: Checkstyle execution and result publishing
         run: |
-          docker run maven:3.8.5-jdk-8 mvn checkstyle:checkstyle-aggregate
+          docker run maven:3.8.5-jdk-8 mvn checkstyle:checkstyle-aggregate -f project
           mkdir checkstyle_results
-          mv -f ./target/site/checkstyle-aggregate.html checkstyle_results/
+          mv -f .project/target/site/checkstyle-aggregate.html checkstyle_results/
 
-      - name: Cache scanner results
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-checkstyle
+      - name: Save scanner results
+        uses: actions/upload-artifact@v3
         with:
           path: checkstyle_results
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./target/site/checkstyle-aggregate.html') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+          name: checkstyle_results
 
   web-update:
     runs-on: ubuntu-20.04
@@ -124,27 +106,17 @@ jobs:
         with:
           ref: ghpages
 
-      - name: Cache results Sonar scanner
-        id: cache-results-scanner
-        uses: actions/cache@v2
+      - name: Get results Sonar scanner
+        id: get-results-scanner
+        uses: actions/download-artifact@v3
         with:
-          path: scanner_results
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('charts.html') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+          name: scanner_results
 
-      - name: Cache results checkstyle
-        id: cache-results-checkstyle
-        uses: actions/cache@v2
+      - name: Get results checkstyle
+        id: get-results-checkstyle
+        uses: actions/download-artifact@v3
         with:
-          path: checkstyle_results
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./target/site/checkstyle-aggregate.html') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+          name: checkstyle_results
 
       - name: Update github page
         continue-on-error: true
@@ -154,7 +126,7 @@ jobs:
 
           mv -f scanner_results/results_markdown.md index.md
           mv -f scanner_results/charts.html _includes/charts.html
-          mv -f checkstyle_results/checkstyle/target/site/checkstyle-aggregate.html checkstyle-aggregate.html
+          mv -f checkstyle_results/checkstyle-aggregate.html checkstyle-aggregate.html
 
           git add index.md _includes/charts.html checkstyle-aggregate.html
           git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
