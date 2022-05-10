@@ -41,7 +41,7 @@ jobs:
           name: project
 
       - name: Docker compose up
-        run: PROJECT_PATH=./project docker-compose up
+        run: PROJECT_PATH=./project docker-compose up -d
 
       - name: Retrieve scanner results
         run: |
