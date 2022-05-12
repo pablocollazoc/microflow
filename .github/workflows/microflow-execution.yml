@@ -94,13 +94,13 @@ jobs:
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn checkstyle:checkstyle-aggregate"
           mkdir checkstyle_results
           cp ./target/site/checkstyle-aggregate.html checkstyle_results/
-          ls checkstyle_results
+          cd ..
 
       - name: Save scanner results
         uses: actions/upload-artifact@v3
         with:
-          path: ./checkstyle_results
           name: checkstyle_results
+          path: ./project/checkstyle_results
 
   web-update:
     runs-on: ubuntu-20.04

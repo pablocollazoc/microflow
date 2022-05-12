@@ -9,4 +9,4 @@
     curl -X POST -u admin:admin -d "gateName=custom&metric=reliability_rating&op=GT&error=1" http://sonarqube:9000/api/qualitygates/create_condition
     curl -X POST -u admin:admin -d "gateName=custom&metric=security_rating&op=GT&error=1" http://sonarqube:9000/api/qualitygates/create_condition
     curl -X POST -u admin:admin -d "gateName=custom&metric=security_hotspots_reviewed&op=LT&error=100" http://sonarqube:9000/api/qualitygates/create_condition
-    mvn clean verify -DskipTests sonar:sonar -Dsonar.projectKey=project -Dsonar.host.url=http://sonarqube:9000 -Dsonar.scm.provider=git -Dsonar.login=admin -Dsonar.password=admin
+    mvn clean verify -DskipTests sonar:sonar -Dsonar.projectKey=project -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=admin -Dsonar.password=admin
