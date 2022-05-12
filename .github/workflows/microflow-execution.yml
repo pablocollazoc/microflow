@@ -94,13 +94,13 @@ jobs:
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn checkstyle:checkstyle-aggregate"
           mkdir checkstyle_results
           cp ./target/site/checkstyle-aggregate.html checkstyle_results/
-          cd ..
+          ls checkstyle_results
 
       - name: Save scanner results
         uses: actions/upload-artifact@v3
         with:
+          path: ./checkstyle_results
           name: checkstyle_results
-          path: ./project/checkstyle_results
 
   web-update:
     runs-on: ubuntu-20.04
@@ -129,9 +129,9 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          mv -f scanner_results/results_markdown.md index.md
-          mv -f scanner_results/charts.html _includes/charts.html
-          mv -f checkstyle_results/checkstyle-aggregate.html checkstyle-aggregate.html
+          mv -f ./scanner_results/results_markdown.md index.md
+          mv -f ./scanner_results/charts.html _includes/charts.html
+          mv -f ./checkstyle_results/checkstyle-aggregate.html checkstyle-aggregate.html
 
           git add index.md _includes/charts.html checkstyle-aggregate.html
           git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
