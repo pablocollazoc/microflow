@@ -99,8 +99,8 @@ jobs:
       - name: Save scanner results
         uses: actions/upload-artifact@v3
         with:
-          path: ./checkstyle_results
           name: checkstyle_results
+          path: ./checkstyle_results
 
   web-update:
     runs-on: ubuntu-20.04
