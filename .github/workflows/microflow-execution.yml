@@ -130,7 +130,6 @@ jobs:
 
           mv -f ./results_markdown.md index.md
           mv -f ./charts.html _includes/charts.html
-          mv -f ./checkstyle-aggregate.html checkstyle-aggregate.html
 
           git add index.md _includes/charts.html checkstyle-aggregate.html
           git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
