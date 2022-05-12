@@ -128,6 +128,9 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
+          ls .
+          ls scanner_results
+          ls checkstyle_results
           mv -f ./scanner_results/results_markdown.md index.md
           mv -f ./scanner_results/charts.html _includes/charts.html
           mv -f ./checkstyle_results/checkstyle-aggregate.html checkstyle-aggregate.html
