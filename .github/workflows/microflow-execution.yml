@@ -103,6 +103,7 @@ jobs:
 
       - name: Spotbugs execution and result publishing
         run: |
+          cd project
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:spotbugs -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST"
 
 
