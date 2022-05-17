@@ -104,9 +104,9 @@ jobs:
       - name: Spotbugs execution and result publishing
         run: |
           cd project
-          spotbugs_result=$(docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:check -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST -fn")
+          results=$(docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:check -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST -fn")
           mkdir spotbugs_results
-          if [[ -n $(echo $spotbugs_result | grep "BugInstance size is") ]]; then
+          if [[ -n $(echo $results | grep "BugInstance size is") ]]; then
             readarray bug_list < <(echo "$results" | grep ERROR | grep line)
             touch spotbugs_results/bug_report.md
             for i in "{bug_list[@]}"; do
