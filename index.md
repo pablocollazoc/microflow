@@ -7,17 +7,17 @@ This GitHub page shows the analysis results for the requested flow execution for
 # **Quality gate status:**
 
 
-***Not passed*** :x:
+***Passed*** :heavy_check_mark:
 
-Quality gate conditions do not passed. Some of these conditions were not acquired: 
-- Code coverage is less than 80% 
+All conditions passed: 
+- No blocker issues 
+- Code coverage is greater than 80% 
+- Duplicated lines is less than 3% 
 - 
-Duplicated lines is greater than 3% 
-- Maintainability rating is worse than A 
-- Reliability rating is worse than A 
-- 
-Security hotspots reviewed is less than 100% 
-- Security rating is worse than A 
+Maintainability rating is A 
+- Reliability rating is A 
+- Security hotspots reviewed is 100% 
+- Security rating is A 
 
 # **Technical debt:** 3h 29min
 
