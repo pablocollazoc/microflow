@@ -93,13 +93,24 @@ jobs:
           cd project
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn checkstyle:checkstyle-aggregate"
           mkdir checkstyle_results
-          cp ./target/site/checkstyle-aggregate.html checkstyle_results/
+          cp ./target/site checkstyle_results/
 
-      - name: Save scanner results
+      - name: Save checkstyle results
         uses: actions/upload-artifact@v3
         with:
           name: checkstyle_results
           path: ./project/checkstyle_results
+
+      - name: Spotbugs execution and result publishing
+        run: |
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:spotbugs -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST"
+
+
+      - name: Save spotbugs results
+        uses: actions/upload-artifact@v3
+        with:
+          name: spotbugs_results
+          path: ./project/spotbugs_results
 
   web-update:
     runs-on: ubuntu-20.04
@@ -122,6 +133,12 @@ jobs:
         with:
           name: checkstyle_results
 
+      - name: Get results spotbugs
+        id: get-results-spotbugs
+        uses: actions/download-artifact@v3
+        with:
+          name: spotbugs_results
+
       - name: Update github page
         continue-on-error: true
         run: |
@@ -131,7 +148,7 @@ jobs:
           mv -f ./results_markdown.md index.md
           mv -f ./charts.html _includes/charts.html
 
-          git add index.md _includes/charts.html checkstyle-aggregate.html
+          git add index.md _includes/charts.html site/checkstyle-aggregate.html site/checkstyle.rss site/images
           git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
 
           git push
