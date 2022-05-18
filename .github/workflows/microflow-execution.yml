@@ -119,7 +119,7 @@ jobs:
 
           if [[ -n $(echo $results | grep "BugInstance size is") ]]; then
             export bugs=$(echo "$results" | grep ERROR | grep line)
-            python spotbugs/generate-spotbugs-results.py
+            python ../spotbugs/generate-spotbugs-results.py
             mv bug_report.md spotbugs_results/
             
           else
