@@ -111,6 +111,8 @@ jobs:
             touch spotbugs_results/bug_report.md
             for i in "{bug_list[@]}"; do
               echo $i\\n > bug_report.md
+              echo $i
+              cat bug_report.md
             done
           else
             echo "NO BUGS FOUND IN THE PROJECT" > bug_report.md
