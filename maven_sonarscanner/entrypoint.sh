@@ -1,6 +1,6 @@
 #!/bin/bash
 /wait-for-it.sh sonarqube:9000 --strict -- \
-    sleep 60
+    sleep 65
     curl -X POST -u admin:admin -d "name=custom" http://sonarqube:9000/api/qualitygates/create
     curl -X POST -u admin:admin -d "name=custom" http://sonarqube:9000/api/qualitygates/set_as_default
     curl -X POST -u admin:admin -d "gateName=custom&metric=coverage&op=LT&error=80" http://sonarqube:9000/api/qualitygates/create_condition
