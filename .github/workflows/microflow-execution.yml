@@ -101,19 +101,28 @@ jobs:
           name: checkstyle_results
           path: ./project/checkstyle_results
 
+      - name: setup python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.8
+          cache: 'pip'
+
+      - name: Install python dependencies
+        run: pip install -r maven_sonarscanner/requirements.txt
+
       - name: Spotbugs execution and result publishing
         run: |
           cd project
           results=$(docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:check -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST -fn")
           mkdir spotbugs_results
+          touch spotbugs_results/bug_report.md
+
           if [[ -n $(echo $results | grep "BugInstance size is") ]]; then
-            readarray bug_list < <(echo "$results" | grep ERROR | grep line)
-            touch spotbugs_results/bug_report.md
-            for i in "${bug_list[@]}"; do
-              echo $i\\n > spotbugs_results/bug_report.md
-            done
+            python spotbugs/generate-spotbugs-results.py "($echo "$results" | grep ERROR | grep line)"
+            mv bug_report.md spotbugs_results/
+            
           else
-            echo "NO BUGS FOUND IN THE PROJECT" > spotbugs_results/bug_report.md
+            echo "## NO BUGS FOUND IN THE PROJECT" > spotbugs_results/bug_report.md
           fi
           
       - name: Save spotbugs results
