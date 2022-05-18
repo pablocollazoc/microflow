@@ -2,13 +2,15 @@
 
 from mdutils.mdutils import MdUtils
 from mdutils import Html
-import sys
+import os
 
 
 
 class SpotbugsResults:
 
-  def generate_results(self, bugs):
+  def generate_results(self):
+
+    bugs = os.getenv('bugs')
 
     mdFile = MdUtils(file_name='bug_report', title='Spotbugs analysis results')
     mdFile.new_header(1, "This GitHub page shows the spotbugs analysis results for the requested project")
@@ -25,4 +27,4 @@ class SpotbugsResults:
     
 
 if __name__ == "__main__":
-    SpotbugsResults().generate_results(sys.argv[1])
+    SpotbugsResults().generate_results()

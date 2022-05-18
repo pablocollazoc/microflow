@@ -118,7 +118,8 @@ jobs:
           touch spotbugs_results/bug_report.md
 
           if [[ -n $(echo $results | grep "BugInstance size is") ]]; then
-            python spotbugs/generate-spotbugs-results.py "($echo "$results" | grep ERROR | grep line)"
+            export bugs=$(echo "$results" | grep ERROR | grep line)
+            python spotbugs/generate-spotbugs-results.py
             mv bug_report.md spotbugs_results/
             
           else
