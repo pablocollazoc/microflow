@@ -110,12 +110,10 @@ jobs:
             readarray bug_list < <(echo "$results" | grep ERROR | grep line)
             touch spotbugs_results/bug_report.md
             for i in "${bug_list[@]}"; do
-              echo $i\\n > bug_report.md
-              echo $i
-              cat bug_report.md
+              echo $i\\n > spotbugs_results/bug_report.md
             done
           else
-            echo "NO BUGS FOUND IN THE PROJECT" > bug_report.md
+            echo "NO BUGS FOUND IN THE PROJECT" > spotbugs_results/bug_report.md
           fi
           
       - name: Save spotbugs results
