@@ -109,7 +109,7 @@ jobs:
           if [[ -n $(echo $results | grep "BugInstance size is") ]]; then
             readarray bug_list < <(echo "$results" | grep ERROR | grep line)
             touch spotbugs_results/bug_report.md
-            for i in "{bug_list[@]}"; do
+            for i in "${bug_list[@]}"; do
               echo $i\\n > bug_report.md
               echo $i
               cat bug_report.md
