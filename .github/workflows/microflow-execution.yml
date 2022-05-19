@@ -169,7 +169,7 @@ jobs:
           mv -f ./charts.html _includes/charts.html
 
           sed -i '1s/^/---\nlayout: default\ntitle: Checkstyle\npermalink: \/checkstyle\/\n---\n\n /' site/checkstyle-aggregate.html
-          sed -i '1s/^/---\nlayout: default\ntitle: About\npermalink: \/about\/\n---\n\n /' bug_report.md
+          sed -i '1s/^/---\nlayout: default\ntitle: About\npermalink: \/spotbugs\/\n---\n\n /' bug_report.md
 
           git add index.md _includes/charts.html site/checkstyle-aggregate.html site/checkstyle.rss site/images bug_report.md
           git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
