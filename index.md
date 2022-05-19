@@ -7,19 +7,19 @@ This GitHub page shows the analysis results for the requested flow execution for
 # **Quality gate status:**
 
 
-***Not passed*** :x:
+***Passed*** :heavy_check_mark:
 
-Quality gate conditions do not passed. Some of these conditions were not acquired: 
-- Code coverage is less than 80% 
+All conditions passed: 
+- No blocker issues 
+- Code coverage is greater than 80% 
+- Duplicated lines is less than 3% 
 - 
-Duplicated lines is greater than 3% 
-- Maintainability rating is worse than A 
-- Reliability rating is worse than A 
-- 
-Security hotspots reviewed is less than 100% 
-- Security rating is worse than A 
+Maintainability rating is A 
+- Reliability rating is A 
+- Security hotspots reviewed is 100% 
+- Security rating is A 
 
-# **Technical debt:** 3h 29min
+# **Technical debt:** 3h 9min
 
 
 {% include charts.html %}
@@ -28,8 +28,6 @@ Security hotspots reviewed is less than 100%
 
 |Nº|Description|Severity|Estimated resolution time|File|Line|
 | :---: | :---: | :---: | :---: | :---: | :---: |
-|0|A "NullPointerException" could be thrown; "getBody()" can return null.|MAJOR|10min|project:catalog-service/src/main/java/com/sivalabs/catalogservice/services/InventoryServiceClient.java|67|
-|1|Call "remove()" on "CORRELATION_ID".|MAJOR|10min|project:catalog-service/src/main/java/com/sivalabs/catalogservice/utils/MyThreadLocalsHolder.java|4|
 
 # **Code smells found:**
   
