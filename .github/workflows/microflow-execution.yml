@@ -10,7 +10,7 @@ on:
         default: ''
 
 jobs:
-  test:
+  retrieve-project:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout input project
@@ -19,15 +19,29 @@ jobs:
           repository: ${{ github.event.inputs.autor_proyecto }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Copy project
-        run: |
-          mkdir /home/runner/microflow && cp -r -p . /home/runner/microflow/
+      - name: Add project to directory
+        run: mkdir ../project && mv * ../project && mv ../project .
 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: project
+          path: .
+
+  sonarqube-scanner:
+    runs-on: ubuntu-20.04
+    needs: retrieve-project
+    steps:
       - name: Checkout microflow project
         uses: actions/checkout@v3
 
+      - name: Get project
+        id: get-project
+        uses: actions/download-artifact@v3
+        with:
+          name: project
+
       - name: Docker compose up
-        run: PROJECT_PATH=/home/runner/microflow docker-compose up -d
+        run: PROJECT_PATH=./project docker-compose up -d
 
       - name: Retrieve scanner results
         run: |
@@ -47,13 +61,103 @@ jobs:
       - name: Get analysis results via SonarQube API
         run: |
           python maven_sonarscanner/generate-results.py
-          cp results_markdown.md /home/runner/results_markdown.md
-          cp charts.html /home/runner/charts.html
+          mkdir scanner_results
+          mv results_markdown.md scanner_results/
+          mv charts.html scanner_results/
 
-      - name: Checkout to gh-pages branch
+      - name: Save scanner results
+        uses: actions/upload-artifact@v3
+        with:
+          name: scanner_results
+          path: ./scanner_results
+
+      - name: Docker compose down
+        run: docker-compose down -v
+
+  checkstyle-spotbugs:
+    needs: retrieve-project
+    runs-on: ubuntu-20.04
+    steps:
+
+      - name: Checkout microflow project
+        uses: actions/checkout@v3
+
+      - name: Get project
+        id: get-project
+        uses: actions/download-artifact@v3
+        with:
+          name: project
+
+      - name: Checkstyle execution and result publishing
+        run: |
+          cd project
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn checkstyle:checkstyle-aggregate"
+          mkdir checkstyle_results
+          cp -r ./target/site checkstyle_results/
+
+      - name: Save checkstyle results
+        uses: actions/upload-artifact@v3
+        with:
+          name: checkstyle_results
+          path: ./project/checkstyle_results
+
+      - name: setup python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.8
+          cache: 'pip'
+
+      - name: Install python dependencies
+        run: pip install -r maven_sonarscanner/requirements.txt
+
+      - name: Spotbugs execution and result publishing
+        run: |
+          cd project
+          results=$(docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:check -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST -fn")
+          mkdir spotbugs_results
+          touch spotbugs_results/bug_report.md
+
+          if [[ -n $(echo $results | grep "BugInstance size is") ]]; then
+            export bugs=$(echo "$results" | grep ERROR | grep line)
+            python ../spotbugs/generate-spotbugs-results.py
+            mv bug_report.md spotbugs_results/
+            
+          else
+            echo "## NO BUGS FOUND IN THE PROJECT" > spotbugs_results/bug_report.md
+          fi
+          
+      - name: Save spotbugs results
+        uses: actions/upload-artifact@v3
+        with:
+          name: spotbugs_results
+          path: ./project/spotbugs_results
+
+  web-update:
+    runs-on: ubuntu-20.04
+    needs: [sonarqube-scanner, checkstyle-spotbugs]
+    steps:
+      - name: Checkout to ghpages branch
         uses: actions/checkout@v3
         with:
           ref: gh-pages
+
+      - name: Get results Sonar scanner
+        id: get-results-scanner
+        uses: actions/download-artifact@v3
+        with:
+          name: scanner_results
+
+      - name: Get results checkstyle
+        id: get-results-checkstyle
+        uses: actions/download-artifact@v3
+        with:
+          name: checkstyle_results
+
+      - name: Get results spotbugs
+        id: get-results-spotbugs
+        uses: actions/download-artifact@v3
+        with:
+          name: spotbugs_results
 
       - name: Update github page
         continue-on-error: true
@@ -61,14 +165,13 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          mv -f /home/runner/results_markdown.md index.md
-          mv -f /home/runner/charts.html _includes/charts.html
-          git add index.md _includes/charts.html
+          mv -f ./results_markdown.md index.md
+          mv -f ./charts.html _includes/charts.html
+
+          sed -i '1s/^/---\nlayout: default\ntitle: Checkstyle\npermalink: \/checkstyle\/\n---\n\n /' site/checkstyle-aggregate.html
+          sed -i '1s/^/---\nlayout: default\ntitle: About\npermalink: \/spotbugs\/\n---\n\n /' bug_report.md
+
+          git add index.md _includes/charts.html site/checkstyle-aggregate.html site/checkstyle.rss site/images bug_report.md
           git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
+
           git push
-
-      - name: Checkout microflow project
-        uses: actions/checkout@v3
-
-      - name: Docker compose down
-        run: docker-compose down -v
