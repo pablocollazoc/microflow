@@ -3,7 +3,7 @@
 import gviz_api
 import json
 
-from datetime import date
+import datetime
 import time
 from textwrap import indent
 from mdutils.mdutils import MdUtils
@@ -146,10 +146,10 @@ class ResultsGenerator:
         vulnerabilities_json = json.loads(vulnerabilities_json)
         issues.append(vulnerabilities_json)
 
-        date1 = str(today.strftime("%Y-%m-%d"))
-        date2 = str(today.strftime("%Y.%m.%d"))
-        time = str(timestrftime("%H_%M"))
-        mdFile = MdUtils(file_name=date1 + "-" + date2 + "." + time + project_json["component"]["name"] + "results", title='Analysis results for ' + project_json["component"]["name"] + ' project')
+        date1 = str(datetime.datetime.now().strftime("%Y-%m-%d"))
+        date2 = str(datetime.datetime.now().strftime("%Y.%m.%d"))
+        time1 = str(time.strftime("%H_%M"))
+        mdFile = MdUtils(file_name=date1 + "-" + date2 + "." + time1 + "-" + project_json["component"]["name"] + "-" + "results", title='Analysis results for ' + project_json["component"]["name"] + ' project')
         mdFile.new_paragraph("This GitHub page shows the analysis results for the requested flow execution for "
                                + project_json["component"]["name"] + "project")
 
@@ -333,7 +333,7 @@ class ResultsGenerator:
         # Create a JavaScript code string for duplications chart.
         jscode_duplications = data_table.ToJSCode("jscode_data_duplications", ["file_name", "Lines_of_code", "duplicated_lines", "ID", "duplicated_blocks"])
 
-        charts = open("-" + date1 + "-charts.html","w+")
+        charts = open(date2 + "-" + time1 +  "-charts.html","w+")
         charts.write(page_template % vars())
         charts.close()
         
