@@ -1,7 +1,0 @@
-I"ü<section id="downloads">
-        <a href="" class="btn">SonarQube Scanner results</a>
-        <a href="https://pablocollazoc.github.io/microflow/2022.05.23.21_25-spring-boot-microservices-series-results/checkstyle" class="btn">Checkstyle results</a>
-        <a href="https://pablocollazoc.github.io/microflow/2022.05.23.21_25-spring-boot-microservices-series-results/spotbugs" class="btn">Spotbugs results</a>
-        <a href="" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
-</section>
-:ET
