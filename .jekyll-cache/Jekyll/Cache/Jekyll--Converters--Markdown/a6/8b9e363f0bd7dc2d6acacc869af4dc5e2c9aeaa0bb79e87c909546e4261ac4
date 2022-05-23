@@ -1,0 +1,71 @@
+I"�<h1 id="spotbugs-analysis-results">Spotbugs analysis results</h1>
+
+<h1 id="this-github-page-shows-the-spotbugs-analysis-results-for-the-requested-project">This GitHub page shows the spotbugs analysis results for the requested project</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">Nº</th>
+      <th style="text-align: center">Severity</th>
+      <th style="text-align: center">Description</th>
+      <th style="text-align: center">Bug</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">0</td>
+      <td style="text-align: center">Medium</td>
+      <td style="text-align: center">new com.sivalabs.catalogservice.services.InventoryServiceClient(RestTemplate, InventoryServiceFeignClient) may expose internal representation by storing an externally mutable object into InventoryServiceClient.restTemplate [com.sivalabs.catalogservice.services.InventoryServiceClient] At InventoryServiceClient.java:[line 29]</td>
+      <td style="text-align: center">EI_EXPOSE_REP2</td>
+    </tr>
+    <tr>
+      <td style="text-align: center"> </td>
+      <td style="text-align: center"> </td>
+      <td style="text-align: center"> </td>
+      <td style="text-align: center"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: center">1</td>
+      <td style="text-align: center">Medium</td>
+      <td style="text-align: center">Possible null pointer dereference in com.sivalabs.catalogservice.services.InventoryServiceClient.getProductInventoryByCode(String) due to return value of called method [com.sivalabs.catalogservice.services.InventoryServiceClient, com.sivalabs.catalogservice.services.InventoryServiceClient] Dereferenced at InventoryServiceClient.java:[line 67]Known null at InventoryServiceClient.java:[line 67]</td>
+      <td style="text-align: center">NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE</td>
+    </tr>
+    <tr>
+      <td style="text-align: center"> </td>
+      <td style="text-align: center"> </td>
+      <td style="text-align: center"> </td>
+      <td style="text-align: center"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: center">2</td>
+      <td style="text-align: center">Medium</td>
+      <td style="text-align: center">com.sivalabs.orderservice.entities.Order.getItems() may expose internal representation by returning Order.items [com.sivalabs.orderservice.entities.Order] At Order.java:[line 25]</td>
+      <td style="text-align: center">EI_EXPOSE_REP</td>
+    </tr>
+    <tr>
+      <td style="text-align: center"> </td>
+      <td style="text-align: center"> </td>
+      <td style="text-align: center"> </td>
+      <td style="text-align: center"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: center">3</td>
+      <td style="text-align: center">Medium</td>
+      <td style="text-align: center">new com.sivalabs.orderservice.entities.Order(Long, String, String, List) may expose internal representation by storing an externally mutable object into Order.items [com.sivalabs.orderservice.entities.Order] At Order.java:[line 14]</td>
+      <td style="text-align: center">EI_EXPOSE_REP2</td>
+    </tr>
+    <tr>
+      <td style="text-align: center"> </td>
+      <td style="text-align: center"> </td>
+      <td style="text-align: center"> </td>
+      <td style="text-align: center"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: center">4</td>
+      <td style="text-align: center">Medium</td>
+      <td style="text-align: center">com.sivalabs.orderservice.entities.Order.setItems(List) may expose internal representation by storing an externally mutable object into Order.items [com.sivalabs.orderservice.entities.Order] At Order.java:[line 12]</td>
+      <td style="text-align: center">EI_EXPOSE_REP2</td>
+    </tr>
+  </tbody>
+</table>
+:ET

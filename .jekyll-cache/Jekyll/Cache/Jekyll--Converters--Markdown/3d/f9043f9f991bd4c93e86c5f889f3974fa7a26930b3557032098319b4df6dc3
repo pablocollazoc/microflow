@@ -1,0 +1,7 @@
+I"²<section id="downloads">
+        <a href="https://pablocollazoc.github.io/microflow/" class="btn">SonarQube Scanner results</a>
+        <a href="https://pablocollazoc.github.io/microflow/checkstyle" class="btn">Checkstyle results</a>
+        <a href="https://pablocollazoc.github.io/microflow/spotbugs" class="btn">Spotbugs results</a>
+        <a href="" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+</section>
+:ET
