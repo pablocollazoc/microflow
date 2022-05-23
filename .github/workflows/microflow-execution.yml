@@ -62,8 +62,8 @@ jobs:
         run: |
           python maven_sonarscanner/generate-results.py
           mkdir scanner_results
-          mv results_markdown.md scanner_results/
-          mv charts.html scanner_results/
+          mv *results.md scanner_results/
+          mv *charts.html scanner_results/
 
       - name: Save scanner results
         uses: actions/upload-artifact@v3
@@ -165,13 +165,13 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          mv -f ./results_markdown.md index.md
-          mv -f ./charts.html _includes/charts.html
+          mv -f ./*results.md _posts/
+          mv -f ./*charts.html _includes/
 
           sed -i '1s/^/---\nlayout: default\ntitle: Checkstyle\npermalink: \/checkstyle\/\n---\n\n /' site/checkstyle-aggregate.html
           sed -i '1s/^/---\nlayout: default\ntitle: About\npermalink: \/spotbugs\/\n---\n\n /' bug_report.md
 
-          git add index.md _includes/charts.html site/checkstyle-aggregate.html site/checkstyle.rss site/images bug_report.md
+          git add index.md _includes/ site/checkstyle-aggregate.html site/checkstyle.rss site/images bug_report.md
           git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
 
           git push
