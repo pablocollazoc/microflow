@@ -1,4 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2022-05-23T23:22:26+02:00</updated><id>http://localhost:4000/feed.xml</id><entry><title type="html">2022.05.23.21_25 Spring Boot Microservices Series Results</title><link href="http://localhost:4000/2022/05/23/2022.05.23.21_25-spring-boot-microservices-series-results.html" rel="alternate" type="text/html" title="2022.05.23.21_25 Spring Boot Microservices Series Results" /><published>2022-05-23T00:00:00+02:00</published><updated>2022-05-23T00:00:00+02:00</updated><id>http://localhost:4000/2022/05/23/2022.05.23.21_25-spring-boot-microservices-series-results</id><content type="html" xml:base="http://localhost:4000/2022/05/23/2022.05.23.21_25-spring-boot-microservices-series-results.html"><![CDATA[<section id="downloads">
+I"{<div class="home">
+
+  <h1 class="page-heading">Latest analysis</h1>
+  <ul class="post-list">
+    <section id="downloads">
         <a href="" class="btn">SonarQube Scanner results</a>
         <a href="https://pablocollazoc.github.io/microflow/2022.05.23.21_25-spring-boot-microservices-series-results/checkstyle" class="btn">Checkstyle results</a>
         <a href="https://pablocollazoc.github.io/microflow/2022.05.23.21_25-spring-boot-microservices-series-results/spotbugs" class="btn">Spotbugs results</a>
@@ -1398,4 +1402,8 @@ jscode_data_duplications.setCell(39, 4, 0);
       <td style="text-align: center">21</td>
     </tr>
   </tbody>
-</table>]]></content><author><name></name></author><summary type="html"><![CDATA[SonarQube Scanner results Checkstyle results Spotbugs results View on GitHub]]></summary></entry></feed>
+</table>
+
+  </ul>
+</div>
+:ET
