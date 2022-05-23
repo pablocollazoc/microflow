@@ -1,4 +1,4 @@
 theme: jekyll-theme-hacker
-baseurl: /microflow/_site
+baseurl: /microflow
 gems:
   - jemoji
