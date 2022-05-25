@@ -149,7 +149,7 @@ class ResultsGenerator:
         date1 = str(datetime.datetime.now().strftime("%Y-%m-%d"))
         date2 = str(datetime.datetime.now().strftime("%Y.%m.%d"))
         time1 = str(time.strftime("%H_%M"))
-        mdFile = MdUtils(file_name=date1 + "-" + date2 + "." + time1 + "-" + project_json["component"]["name"] + "-" + "results", title='Analysis results for ' + project_json["component"]["name"] + ' project')
+        mdFile = MdUtils(file_name=date1 + "-" + date2 + "-" + time1 + "-" + project_json["component"]["name"] + "-" + "results", title='Analysis results for ' + project_json["component"]["name"] + ' project')
         mdFile.new_paragraph("This GitHub page shows the analysis results for the requested flow execution for "
                                + project_json["component"]["name"] + "project")
 

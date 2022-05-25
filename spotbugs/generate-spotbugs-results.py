@@ -3,7 +3,8 @@
 from mdutils.mdutils import MdUtils
 from mdutils import Html
 import os
-
+import datetime
+import time
 
 
 class SpotbugsResults:
@@ -12,7 +13,10 @@ class SpotbugsResults:
 
     bugs = os.getenv('bugs')
 
-    mdFile = MdUtils(file_name='bug_report', title='Spotbugs analysis results')
+    date1 = str(datetime.datetime.now().strftime("%Y-%m-%d"))
+    date2 = str(datetime.datetime.now().strftime("%Y.%m.%d"))
+    time1 = str(time.strftime("%H_%M"))
+    mdFile = MdUtils(file_name=date2 + "-" + time1 + "-" + 'bug_report', title='Spotbugs analysis results')
     mdFile.new_header(1, "This GitHub page shows the spotbugs analysis results for the requested project")
     list_of_strings = ["Nº", "Severity", "Description", "Bug"]
 

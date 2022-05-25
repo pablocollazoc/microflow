@@ -114,16 +114,13 @@ jobs:
         run: |
           cd project
           results=$(docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:check -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST -fn")
-          mkdir spotbugs_results
-          touch spotbugs_results/bug_report.md
-
-          if [[ -n $(echo $results | grep "BugInstance size is") ]]; then
-            export bugs=$(echo "$results" | grep ERROR | grep line)
-            python ../spotbugs/generate-spotbugs-results.py
-            mv bug_report.md spotbugs_results/
+          mkdir spotbugs_results  
+          export bugs=$(echo "$results" | grep ERROR | grep line)
+          python ../spotbugs/generate-spotbugs-results.py
+          mv *bug_report.md spotbugs_results/
             
-          else
-            echo "## NO BUGS FOUND IN THE PROJECT" > spotbugs_results/bug_report.md
+          if [[ -z $(echo $results | grep "BugInstance size is") ]]; then
+            echo "## NO BUGS FOUND IN THE PROJECT" > spotbugs_results/*bug_report.md
           fi
           
       - name: Save spotbugs results
@@ -165,13 +162,24 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-          mv -f ./*results.md _posts/
-          mv -f ./*charts.html _includes/
+          sonar_file=$(ls . | grep *results.md)
+          charts_file=$(ls . | grep *charts.html)
+          mv -f "$sonar_file" _posts/
+          mv -f "$charts_file" _includes/
 
-          sed -i '1s/^/---\nlayout: default\ntitle: Checkstyle\npermalink: \/checkstyle\/\n---\n\n /' site/checkstyle-aggregate.html
-          sed -i '1s/^/---\nlayout: default\ntitle: About\npermalink: \/spotbugs\/\n---\n\n /' bug_report.md
+          spotbugs_file=$(ls . | grep *bug_report.md)         
+          mkdir analysis_history/${sonar_file%%-results.md}
+          mv -f $spotbugs_file analysis_history/${sonar_file%%-results.md}
+          mv -f site/checkstyle-aggregate.html analysis_history/${sonar_file%%-results.md}/${sonar_file%%-results.md}-checkstyle-aggregate.html
+          
+          urls="<section id=\"downloads\"><a href=\"{{ post.url }}\" class=\"btn\">SonarQube Scanner results</a><a href=\"https://pablocollazoc.github.io/microflow/${sonar_file%%-results.md}/checkstyle\" class\"btn\">Checkstyle results</a><a href=\"https://pablocollazoc.github.io/microflow/${sonar_file%%-results.md}/spotbugs\" class=\"btn\">Spotbugs results</a><a href=\"{{ site.github.repository_url }}\" class=\"btn btn-github\"><span class=\"icon\"></span>View on GitHub</a></section>"
 
-          git add index.md _includes/ site/checkstyle-aggregate.html site/checkstyle.rss site/images bug_report.md
+          sed -i "1s|^|---\nlayout: default\n---\n${urls} |" _posts/$sonar_file
+
+          sed -i '1s|^|---\nlayout: default\ntitle: Checkstyle\npermalink: \/${sonar_file%%-results.md}\/checkstyle\/\n---\n\n |' analysis_history/${sonar_file%%-results.md}/${sonar_file%%-results.md}-checkstyle-aggregate.html
+          sed -i '1s|^|---\nlayout: default\ntitle: About\npermalink: \/${sonar_file%%-results.md}\/spotbugs\/\n---\n\n |' analysis_history/${sonar_file%%-results.md}/$spotbugs_file
+
+          git add _posts _includes analysis_history/
           git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
 
           git push
