@@ -337,7 +337,7 @@ class ResultsGenerator:
         charts.write(page_template % vars())
         charts.close()
         
-        mdFile.new_paragraph("{% include charts.html %}")
+        mdFile.new_paragraph("{% include " + date2 + "-" + time1 +  "-charts.html" + "%}")
 
         # Issues found table creation
         for y in range(len(issues)):
