@@ -172,7 +172,7 @@ jobs:
           mv -f $spotbugs_file analysis_history/${sonar_file%%-results.md}
           mv -f site/checkstyle-aggregate.html analysis_history/${sonar_file%%-results.md}/${sonar_file%%-results.md}-checkstyle-aggregate.html
           
-          urls="<section id=\"downloads\"><a href=\"{{ post.url }}\" class=\"btn\">SonarQube Scanner results</a><a href=\"https://pablocollazoc.github.io/microflow/${sonar_file%%-results.md}/checkstyle\" class\"btn\">Checkstyle results</a><a href=\"https://pablocollazoc.github.io/microflow/${sonar_file%%-results.md}/spotbugs\" class=\"btn\">Spotbugs results</a><a href=\"{{ site.github.repository_url }}\" class=\"btn btn-github\"><span class=\"icon\"></span>View on GitHub</a></section>"
+          urls="<section id=\"downloads\"><a href=\"{{ post.url }}\" class=\"btn\">SonarQube Scanner results</a><a href=\"https://pablocollazoc.github.io/microflow/${sonar_file%%-results.md}/checkstyle\" class=\"btn\">Checkstyle results</a><a href=\"https://pablocollazoc.github.io/microflow/${sonar_file%%-results.md}/spotbugs\" class=\"btn\">Spotbugs results</a><a href=\"{{ site.github.repository_url }}\" class=\"btn btn-github\"><span class=\"icon\"></span>View on GitHub</a></section>"
 
           sed -i "1s|^|---\nlayout: default\n---\n${urls} |" _posts/$sonar_file
 
