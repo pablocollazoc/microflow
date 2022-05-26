@@ -176,8 +176,8 @@ jobs:
 
           sed -i "1s|^|---\nlayout: default\n---\n${urls}\n\n |" _posts/$sonar_file
 
-          sed -i "1s|^|---\nlayout: default\ntitle: Checkstyle\npermalink: \/${sonar_file%%-results.md}\/checkstyle\/\n---\n<a onclick="window.history.back()">Back</a>\n |" analysis_history/${sonar_file%%-results.md}/${sonar_file%%-results.md}-checkstyle-aggregate.html
-          sed -i "1s|^|---\nlayout: default\ntitle: About\npermalink: \/${sonar_file%%-results.md}\/spotbugs\/\n---\n<a onclick="window.history.back()">Back</a>\n |" analysis_history/${sonar_file%%-results.md}/$spotbugs_file
+          sed -i "1s|^|---\nlayout: default\ntitle: Checkstyle\npermalink: \/${sonar_file%%-results.md}\/checkstyle\/\n---\n<a onclick=\"window.history.back\(\)\">Back</a>\n |" analysis_history/${sonar_file%%-results.md}/${sonar_file%%-results.md}-checkstyle-aggregate.html
+          sed -i "1s|^|---\nlayout: default\ntitle: About\npermalink: \/${sonar_file%%-results.md}\/spotbugs\/\n---\n<a onclick=\"window.history.back\(\)\">Back</a>\n |" analysis_history/${sonar_file%%-results.md}/$spotbugs_file
 
           git add _posts _includes analysis_history/
           git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
