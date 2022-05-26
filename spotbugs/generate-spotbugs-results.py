@@ -14,8 +14,8 @@ class SpotbugsResults:
     bugs = os.getenv('bugs')
 
     date = str(datetime.datetime.now().strftime("%Y-%m-%d"))
-    time = str(time.strftime("%H_%M"))
-    mdFile = MdUtils(file_name=date + "-" + time + "-" + 'bug_report', title='Spotbugs analysis results')
+    timestamp = str(time.strftime("%H_%M"))
+    mdFile = MdUtils(file_name=date + "-" + timestamp + "-" + 'bug_report', title='Spotbugs analysis results')
     mdFile.new_header(1, "This GitHub page shows the spotbugs analysis results for the requested project")
     list_of_strings = ["Nº", "Severity", "Description", "Bug"]
 

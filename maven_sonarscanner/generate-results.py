@@ -147,8 +147,8 @@ class ResultsGenerator:
         issues.append(vulnerabilities_json)
 
         date = str(datetime.datetime.now().strftime("%Y-%m-%d"))
-        time = str(time.strftime("%H_%M"))
-        mdFile = MdUtils(file_name=date + "-" + time + "-" + project_json["component"]["name"] + "-" + "results", title='Analysis results for ' + project_json["component"]["name"] + ' project')
+        timestamp = str(time.strftime("%H_%M"))
+        mdFile = MdUtils(file_name=date + "-" + timestamp + "-" + project_json["component"]["name"] + "-" + "results", title='Analysis results for ' + project_json["component"]["name"] + ' project')
         mdFile.new_paragraph("This GitHub page shows the analysis results for the requested flow execution for "
                                + project_json["component"]["name"] + "project")
 
@@ -332,11 +332,11 @@ class ResultsGenerator:
         # Create a JavaScript code string for duplications chart.
         jscode_duplications = data_table.ToJSCode("jscode_data_duplications", ["file_name", "Lines_of_code", "duplicated_lines", "ID", "duplicated_blocks"])
 
-        charts = open(date + "-" + time +  "-charts.html","w+")
+        charts = open(date + "-" + timestamp +  "-charts.html","w+")
         charts.write(page_template % vars())
         charts.close()
         
-        mdFile.new_paragraph("{% include " + date + "-" + time +  "-charts.html" + "%}")
+        mdFile.new_paragraph("{% include " + date + "-" + timestamp +  "-charts.html" + "%}")
 
         # Issues found table creation
         for y in range(len(issues)):
