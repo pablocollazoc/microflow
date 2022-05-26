@@ -5,6 +5,9 @@ layout: default
 
   <h1 class="page-heading">Latest analysis</h1>
   <ul class="post-list">
-    {{ site.posts.last.content }}
+    {% for post in site.posts limit:1 %}
+      {{ post.content }}
+    {% endfor %}
+    
   </ul>
 </div>
