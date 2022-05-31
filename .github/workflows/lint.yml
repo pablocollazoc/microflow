@@ -11,10 +11,14 @@ jobs:
     outputs:
       yaml: ${{ steps.changes.outputs.yaml }}
       yaml-files: ${{ steps.changes.outputs.yaml_files }}
-      markdown: ${{ steps.changes.outputs.markdown }}
-      markdown-files: ${{ steps.changes.outputs.markdown_files }}
       workflows: ${{ steps.changes.outputs.workflows }}
       workflows-files: ${{ steps.changes.outputs.workflows_files }}
+      python: ${{ steps.changes.outputs.python }}
+      python-files: ${{ steps.changes.outputs.python_files }}
+      sh: ${{ steps.changes.outputs.sh }}
+      sh-files: ${{ steps.changes.outputs.sh_files }}
+      dockerfile: ${{ steps.changes.outputs.dockerfile }}
+      dockerfile-files: ${{ steps.changes.outputs.dockerfile_files }}
     steps:
       - name: Check for changed files in specific paths
         id: changes
