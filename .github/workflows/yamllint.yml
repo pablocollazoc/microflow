@@ -2,5 +2,5 @@
 name: lint-verify
 
 on:
-  pull-request:
+  pull_request:
     branches: []
