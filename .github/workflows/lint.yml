@@ -45,7 +45,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: YAML Lint
-        run: yamllint ${{ needs.check-changes-in-paths.outputs.yaml-files }}
+        run: yamllint -d relaxed ${{ needs.check-changes-in-paths.outputs.yaml-files }}
   action-lint:
     name: Action Lint
     needs: check-changes-in-paths
