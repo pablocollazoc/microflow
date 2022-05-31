@@ -112,7 +112,6 @@ jobs:
   dockerfile-lint:
     name: Dockerfile Lint
     needs: check-changes-in-paths
-    if: needs.check-changes-in-paths.outputs.dockerfile == 'true'
     runs-on: ubuntu-20.04
     steps:
       - name: Lint Dockerfiles
