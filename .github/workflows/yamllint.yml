@@ -45,7 +45,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: YAML Lint
-        run: yamllint -c .github/.yaml-lint.yml ${{ needs.check-changes-in-paths.outputs.yaml-files }}
+        run: yamllint ${{ needs.check-changes-in-paths.outputs.yaml-files }}
   action-lint:
     name: Action Lint
     needs: check-changes-in-paths
@@ -106,7 +106,7 @@ jobs:
         run: |
           shellcheck --color=always --format=tty --severity=info ${{ needs.check-changes-in-paths.outputs.sh-files }}
   dockerfile-lint:
-    name: Dockerfile lint
+    name: Dockerfile Lint
     needs: check-changes-in-paths
     if: needs.check-changes-in-paths.outputs.dockerfile == 'true'
     runs-on: ubuntu-20.04
