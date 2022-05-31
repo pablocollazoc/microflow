@@ -2,7 +2,7 @@
 name: lint-verify
 
 on:
-  pull-request:
+  pull_request:
 
 jobs:
   check-changes-in-paths:
