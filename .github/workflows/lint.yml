@@ -91,7 +91,11 @@ jobs:
           pip install pylint
       - name: Analysing the code with pylint
         run: |
-          pylint ${{ needs.check-changes-in-paths.outputs.python-files }}
+          pylint -v --errors-only ${{ needs.check-changes-in-paths.outputs.python-files }}
+      - name: Run pylint to provide additional information without failing
+        continue-on-error: true
+        run: |
+          pylint -v ${{ needs.check-changes-in-paths.outputs.sh-files }}
   shellcheck:
     name: Shellcheck
     needs: check-changes-in-paths
