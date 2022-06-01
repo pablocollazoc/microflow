@@ -17,8 +17,8 @@ jobs:
       python-files: ${{ steps.changes.outputs.python_files }}
       sh: ${{ steps.changes.outputs.sh }}
       sh-files: ${{ steps.changes.outputs.sh_files }}
-      Dockerfile: ${{ steps.changes.outputs.Dockerfile }}
-      Dockerfile-files: ${{ steps.changes.outputs.Dockerfile_files }}
+      dockerfile: ${{ steps.changes.outputs.docker }}
+      dockerfile-files: ${{ steps.changes.outputs.docker_files }}
     steps:
       - name: Check for changed files in specific paths
         id: changes
@@ -36,7 +36,7 @@ jobs:
               - added|modified: '**.py'
             sh:
               - added|modified: '**.sh'
-            Dockerfile:
+            docker:
               - added|modified: '**Dockerfile**'
   yaml-lint:
     name: YAML Lint
@@ -112,7 +112,7 @@ jobs:
   dockerfile-lint:
     name: Dockerfile Lint
     needs: check-changes-in-paths
-    if: needs.check-changes-in-paths.outputs.Dockerfile == 'true'
+    if: needs.check-changes-in-paths.outputs.docker == 'true'
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
@@ -121,4 +121,4 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: hadolint/hadolint-action@v2.0.0
         with:
-          dockerfile: ${{ needs.check-changes-in-paths.outputs.Dockerfile-files }}
+          dockerfile: ${{ needs.check-changes-in-paths.outputs.docker-files }}
