@@ -24,6 +24,7 @@ jobs:
         id: changes
         uses: dorny/paths-filter@v2.10.2
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           list-files: shell
           filters: |
             yaml:
