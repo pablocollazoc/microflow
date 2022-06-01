@@ -39,7 +39,7 @@ jobs:
               - added|modified: '**.py'
             sh:
               - added|modified: '**.sh'
-            
+
   yaml-lint:
     name: YAML Lint
     needs: check-changes-in-paths
