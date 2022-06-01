@@ -28,7 +28,7 @@ jobs:
           list-files: shell
           filters: |
             dockerfile:
-              - added|modified: '**Dockerfile**'
+              - added|modified: '*/**Dockerfile**'
             yaml:
               - added|modified: '**.yml'
               - added|modified: '**.yaml'
