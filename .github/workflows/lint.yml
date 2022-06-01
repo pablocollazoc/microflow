@@ -95,7 +95,7 @@ jobs:
       - name: Run pylint to provide additional information without failing
         continue-on-error: true
         run: |
-          pylint -v ${{ needs.check-changes-in-paths.outputs.sh-files }}
+          pylint -v ${{ needs.check-changes-in-paths.outputs.python-files }}
   shellcheck:
     name: Shellcheck
     needs: check-changes-in-paths
