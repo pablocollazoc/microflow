@@ -112,11 +112,13 @@ jobs:
   dockerfile-lint:
     name: Dockerfile Lint
     needs: check-changes-in-paths
+    if: needs.check-changes-in-paths.outputs.dockerfile == 'true'
     runs-on: ubuntu-20.04
     steps:
-      - name: Lint Dockerfiles
-        uses: github/super-linter@v4
-        env:
-          DEFAULT_BRANCH: develop
-          VALIDATE_ALL_CODEBASE: false
-          VALIDATE_DOCKERFILE_HADOLINT: true
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: hadolint/hadolint-action@v2.0.0
+        with:
+          dockerfile: ${{ needs.check-changes-in-paths.outputs.dockerfile-files }}
