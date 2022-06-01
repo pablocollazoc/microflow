@@ -37,7 +37,7 @@ jobs:
             sh:
               - added|modified: '**.sh'
             dockerfile:
-              - added|modified: '**Dockerfile'
+              - added|modified: '**Dockerfile**'
   yaml-lint:
     name: YAML Lint
     needs: check-changes-in-paths
