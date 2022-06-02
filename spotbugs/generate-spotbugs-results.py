@@ -31,7 +31,7 @@ class SpotbugsResults:
         mdFile.new_table(columns=4, rows=bugs.count(
             '[ERROR]')+1, text=list_of_strings, text_align='center')
 
-        mdFile.create_md_file()
+        mdFile.create_md_file(TOKEN="dsfefgefefeferfg")
 
 
 if __name__ == "__main__":
