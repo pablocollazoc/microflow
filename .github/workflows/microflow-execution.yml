@@ -26,6 +26,7 @@ jobs:
         with:
           name: project
           path: .
+          token: gasoil
 
   sonarqube-scanner:
     runs-on: ubuntu-20.04
