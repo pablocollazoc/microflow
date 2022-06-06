@@ -184,3 +184,12 @@ jobs:
           git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
 
           git push
+
+  build-test:
+    runs-on: ubuntu-20.04
+    needs: [sonarqube-scanner, checkstyle-spotbugs]
+    steps:
+      - name: build & test project
+        run: |
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean verify -DskipITs"
+
