@@ -1,3 +1,4 @@
+ARG JDK_VERSION=${JDK_VERSION}
 FROM maven:3.8.5-${JDK_VERSION}
 
 COPY ./maven_sonarscanner/wait-for-it.sh /${PROJECT_PATH}/wait-for-it.sh
