@@ -19,6 +19,8 @@ services:
     build:
       context: .
       dockerfile: maven_sonarscanner/Dockerfile
+      args:
+        JDK_VERSION: ${JDK_VERSION}
     volumes:
       - ${PROJECT_PATH}:/${PROJECT_PATH}
     working_dir: /${PROJECT_PATH}
