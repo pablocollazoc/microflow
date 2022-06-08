@@ -196,6 +196,12 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [sonarqube-scanner, checkstyle-spotbugs]
     steps:
+      - name: Get project
+        id: get-project
+        uses: actions/download-artifact@v3
+        with:
+          name: project
       - name: build & test project
         run: |
+          cd project
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn clean verify -DskipITs"
