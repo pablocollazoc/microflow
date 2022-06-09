@@ -31,7 +31,7 @@ jobs:
 
       - name: Check correct compile of project
         run: |
-          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn clean compile"
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn clean compile -f project"
 
       - uses: actions/upload-artifact@v3
         with:
