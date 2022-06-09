@@ -29,6 +29,10 @@ jobs:
       - name: Add project to directory
         run: mkdir ../project && mv * ../project && mv ../project .
 
+      - name: Check correct compile of project
+        run: |
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn clean compile"
+
       - uses: actions/upload-artifact@v3
         with:
           name: project
