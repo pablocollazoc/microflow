@@ -187,6 +187,8 @@ class ResultsGenerator:
         mdFile = MdUtils(
             file_name=date
             + "-"
+            + date
+            + "-"
             + timestamp
             + "-"
             + project_json["component"]["name"]

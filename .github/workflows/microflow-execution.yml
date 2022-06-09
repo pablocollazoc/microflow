@@ -8,6 +8,13 @@ on:
         description: 'Autor/proyecto a analizar'
         required: true
         default: ''
+      java_version:
+        type: choice
+        description: 'Java version'
+        required: true
+        options:
+          - jdk-8
+          - jdk-11
 
 jobs:
   retrieve-project:
@@ -21,6 +28,10 @@ jobs:
 
       - name: Add project to directory
         run: mkdir ../project && mv * ../project && mv ../project .
+
+      - name: Check correct compile of project
+        run: |
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn clean compile -f project"
 
       - uses: actions/upload-artifact@v3
         with:
@@ -41,7 +52,7 @@ jobs:
           name: project
 
       - name: Docker compose up
-        run: PROJECT_PATH=./project docker-compose up -d
+        run: JDK_VERSION=${{ github.event.inputs.java_version }} PROJECT_PATH=./project docker-compose up -d
 
       - name: Retrieve scanner results
         run: |
@@ -91,7 +102,7 @@ jobs:
       - name: Checkstyle execution and result publishing
         run: |
           cd project
-          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn checkstyle:checkstyle-aggregate"
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn checkstyle:checkstyle-aggregate"
           mkdir checkstyle_results
           cp -r ./target/site checkstyle_results/
 
@@ -113,7 +124,7 @@ jobs:
       - name: Spotbugs execution and result publishing
         run: |
           cd project
-          results=$(docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:check -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST -fn")
+          results=$(docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:check -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST -fn")
           mkdir spotbugs_results
           export bugs=$(echo "$results" | grep ERROR | grep line)
           python ../spotbugs/generate-spotbugs-results.py
@@ -168,19 +179,33 @@ jobs:
           mv -f "$charts_file" _includes/
 
           spotbugs_file=$(ls . | grep *bug_report.md)
-          mkdir analysis_history/${sonar_file%%-results.md}
-          mv -f $spotbugs_file analysis_history/${sonar_file%%-results.md}
-          mv -f site/checkstyle-aggregate.html analysis_history/${sonar_file%%-results.md}/${sonar_file%%-results.md}-checkstyle-aggregate.html
+          mkdir analysis_history/${charts_file%%-charts.html}
+          mv -f $spotbugs_file analysis_history/${charts_file%%-charts.html}
+          mv -f site/checkstyle-aggregate.html analysis_history/${charts_file%%-charts.html}/${charts_file%%-charts.html}-checkstyle-aggregate.html
 
-          urls="<section id=\"downloads\"><a href=\"https://pablocollazoc.github.io/microflow/${sonar_file%%-results.md}/checkstyle\" class=\"btn\">Checkstyle results</a><a href=\"https://pablocollazoc.github.io/microflow/${sonar_file%%-results.md}/spotbugs\" class=\"btn\">Spotbugs results</a><a href=\"{{ site.github.repository_url }}\" class=\"btn btn-github\"><span class=\"icon\"></span>View on GitHub</a></section>"
+          urls="<section id=\"downloads\"><a href=\"https://pablocollazoc.github.io/microflow/${charts_file%%-charts.html}/checkstyle\" class=\"btn\">Checkstyle results</a><a href=\"https://pablocollazoc.github.io/microflow/${charts_file%%-charts.html}/spotbugs\" class=\"btn\">Spotbugs results</a><a href=\"{{ site.github.repository_url }}\" class=\"btn btn-github\"><span class=\"icon\"></span>View on GitHub</a></section>"
 
           sed -i "1s|^|---\nlayout: default\n---\n${urls}\n\n |" _posts/$sonar_file
 
-          sed -i "1s|^|---\nlayout: default\ntitle: Checkstyle\npermalink: \/${sonar_file%%-results.md}\/checkstyle\/\n---\n<section id=\"downloads\"><a onclick=\"window.history.back\(\)\">Back</a></section>\n\n |" analysis_history/${sonar_file%%-results.md}/${sonar_file%%-results.md}-checkstyle-aggregate.html
+          sed -i "1s|^|---\nlayout: default\ntitle: Checkstyle\npermalink: \/${charts_file%%-charts.html}\/checkstyle\/\n---\n<section id=\"downloads\"><a onclick=\"window.history.back\(\)\">Back</a></section>\n\n |" analysis_history/${charts_file%%-charts.html}/${charts_file%%-charts.html}-checkstyle-aggregate.html
 
-          sed -i "1s|^|---\nlayout: default\ntitle: Spotbugs\npermalink: \/${sonar_file%%-results.md}\/spotbugs\/\n---\n<section id=\"downloads\">  \n<a onclick=\"window.history.back\(\)\">Back</a></section>\n\n |" analysis_history/${sonar_file%%-results.md}/$spotbugs_file
+          sed -i "1s|^|---\nlayout: default\ntitle: Spotbugs\npermalink: \/${charts_file%%-charts.html}\/spotbugs\/\n---\n<section id=\"downloads\">  \n<a onclick=\"window.history.back\(\)\">Back</a></section>\n\n |" analysis_history/${charts_file%%-charts.html}/$spotbugs_file
 
           git add _posts _includes analysis_history/
           git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
 
           git push
+
+  build-test:
+    runs-on: ubuntu-20.04
+    needs: [sonarqube-scanner, checkstyle-spotbugs]
+    steps:
+      - name: Get project
+        id: get-project
+        uses: actions/download-artifact@v3
+        with:
+          name: project
+      - name: build & test project
+        run: |
+          cd project
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn clean verify -DskipITs"
