@@ -25,7 +25,7 @@ jobs:
     if: contains(join(github.event.label.name, ', '), 'microflow-start')
     outputs:
       PROJECT: ${{ steps.parsing.outputs.repo_name }}
-      JDK: ${{ steps.get-butler-info.outputs.jdk_version }}
+      JDK: ${{ steps.parsing.outputs.jdk_version }}
     steps:
       - name: Get information from body
         id: parsing
