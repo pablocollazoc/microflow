@@ -54,7 +54,7 @@ jobs:
 
       - name: Check correct compile of project
         run: |
-          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ jobs.retrieve-project.outputs.JDK }}" sh -c "mvn clean compile -f project"
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ job.outputs.JDK }}" sh -c "mvn clean compile -f project"
 
       - uses: actions/upload-artifact@v3
         with:
@@ -75,7 +75,7 @@ jobs:
           name: project
 
       - name: Docker compose up
-        run: JDK_VERSION=${{ jobs.retrieve-project.outputs.JDK }} PROJECT_PATH=./project docker-compose up -d
+        run: JDK_VERSION=${{ needs.retrieve-project.outputs.JDK }} PROJECT_PATH=./project docker-compose up -d
 
       - name: Retrieve scanner results
         run: |
@@ -124,7 +124,7 @@ jobs:
       - name: Checkstyle execution and result publishing
         run: |
           cd project
-          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ jobs.retrieve-project.outputs.JDK }}" sh -c "mvn checkstyle:checkstyle-aggregate"
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ needs.retrieve-project.outputs.JDK }}" sh -c "mvn checkstyle:checkstyle-aggregate"
           mkdir checkstyle_results
           cp -r ./target/site checkstyle_results/
 
@@ -146,7 +146,7 @@ jobs:
       - name: Spotbugs execution and result publishing
         run: |
           cd project
-          results=$(docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ jobs.retrieve-project.outputs.JDK }}" sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:check -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST -fn")
+          results=$(docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ needs.retrieve-project.outputs.JDK }}" sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:check -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST -fn")
           mkdir spotbugs_results
           export bugs=$(echo "$results" | grep ERROR | grep line)
           python ../spotbugs/generate-spotbugs-results.py
@@ -220,7 +220,7 @@ jobs:
 
   build-test:
     runs-on: ubuntu-20.04
-    needs: [sonarqube-scanner, checkstyle-spotbugs]
+    needs: [retrieve-project, sonarqube-scanner, checkstyle-spotbugs]
     steps:
       - name: Get project
         id: get-project
@@ -230,4 +230,4 @@ jobs:
       - name: build & test project
         run: |
           cd project
-          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ jobs.retrieve-project.outputs.JDK }}" sh -c "mvn clean verify -DskipITs"
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ needs.retrieve-project.outputs.JDK }}" sh -c "mvn clean verify -DskipITs"
