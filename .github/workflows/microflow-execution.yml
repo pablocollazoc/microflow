@@ -15,15 +15,38 @@ on:
         options:
           - jdk-8
           - jdk-11
+  issues:
+    types:
+      - labeled
 
 jobs:
   retrieve-project:
     runs-on: ubuntu-20.04
+    if: contains(join(github.event.label.name, ', '), 'microflow-start')
+    outputs:
+      PROJECT: ${{ steps.parsing.outputs.repo_name }}
+      JDK: ${{ steps.get-butler-info.outputs.jdk_version }}
     steps:
+      - name: Get information from body
+        id: parsing
+        shell: python
+        env:
+          BODY: ${{ github.event.issue.body }}
+        run: |
+          import os
+          import re
+          import sys
+          rawform = str(os.environ['BODY'])
+          repo_name = re.search(r"(### GitHub Repository\s*)(.*)", rawform).group(2)
+          jdk_version = re.search(r"(### Java version used in the project\s*)(.*)", rawform).group(2)
+
+          print(f'::set-output name=repo_name::{repo_name}')
+          print(f'::set-output name=jdk_version::{jdk_version}')
+
       - name: Checkout input project
         uses: actions/checkout@v3
         with:
-          repository: ${{ github.event.inputs.autor_proyecto }}
+          repository: ${{ jobs.retrieve-project.outputs.PROJECT }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add project to directory
@@ -31,7 +54,7 @@ jobs:
 
       - name: Check correct compile of project
         run: |
-          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn clean compile -f project"
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ jobs.retrieve-project.outputs.JDK }}" sh -c "mvn clean compile -f project"
 
       - uses: actions/upload-artifact@v3
         with:
@@ -52,7 +75,7 @@ jobs:
           name: project
 
       - name: Docker compose up
-        run: JDK_VERSION=${{ github.event.inputs.java_version }} PROJECT_PATH=./project docker-compose up -d
+        run: JDK_VERSION=${{ jobs.retrieve-project.outputs.JDK }} PROJECT_PATH=./project docker-compose up -d
 
       - name: Retrieve scanner results
         run: |
@@ -102,7 +125,7 @@ jobs:
       - name: Checkstyle execution and result publishing
         run: |
           cd project
-          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn checkstyle:checkstyle-aggregate"
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ jobs.retrieve-project.outputs.JDK }}" sh -c "mvn checkstyle:checkstyle-aggregate"
           mkdir checkstyle_results
           cp -r ./target/site checkstyle_results/
 
@@ -124,7 +147,7 @@ jobs:
       - name: Spotbugs execution and result publishing
         run: |
           cd project
-          results=$(docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:check -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST -fn")
+          results=$(docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ jobs.retrieve-project.outputs.JDK }}" sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:check -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST -fn")
           mkdir spotbugs_results
           export bugs=$(echo "$results" | grep ERROR | grep line)
           python ../spotbugs/generate-spotbugs-results.py
@@ -192,7 +215,7 @@ jobs:
           sed -i "1s|^|---\nlayout: default\ntitle: Spotbugs\npermalink: \/${charts_file%%-charts.html}\/spotbugs\/\n---\n<section id=\"downloads\">  \n<a onclick=\"window.history.back\(\)\">Back</a></section>\n\n |" analysis_history/${charts_file%%-charts.html}/$spotbugs_file
 
           git add _posts _includes analysis_history/
-          git commit -m "Updated gh page with ${{ github.event.inputs.autor_proyecto }} analysis"
+          git commit -m "Updated gh page with ${{ jobs.retrieve-project.outputs.PROJECT }} analysis"
 
           git push
 
@@ -208,4 +231,4 @@ jobs:
       - name: build & test project
         run: |
           cd project
-          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn clean verify -DskipITs"
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ jobs.retrieve-project.outputs.JDK }}" sh -c "mvn clean verify -DskipITs"
