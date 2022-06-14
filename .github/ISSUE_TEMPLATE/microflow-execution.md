@@ -4,9 +4,6 @@ about: Execute the migrate workflow on a repository.
 title: Microflow execution for the project user/projectname
 labels: microflow-start
 assignees: ''
-
----
-
 body:
   - type: markdown
     attributes:
@@ -29,3 +26,6 @@ body:
         - jdk-11
     validations:
       required: true
+---
+
+
