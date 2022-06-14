@@ -40,15 +40,13 @@ jobs:
           repo_name = re.search(r"(### GitHub Repository\s*)(.*)", rawform).group(2)
           jdk_version = re.search(r"(### Java version used in the project\s*)(.*)", rawform).group(2)
 
-          print("hola" + repo_name)
-          print("hola" + jdk_version)
           print(f'::set-output name=repo_name::{repo_name}')
           print(f'::set-output name=jdk_version::{jdk_version}')
 
       - name: Checkout input project
         uses: actions/checkout@v3
         with:
-          repository: ${{ job.outputs.PROJECT }}
+          repository: ${{ steps.parsing.outputs.repo_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add project to directory
@@ -56,7 +54,7 @@ jobs:
 
       - name: Check correct compile of project
         run: |
-          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ job.outputs.JDK }}" sh -c "mvn clean compile -f project"
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ steps.parsing.outputs.jdk_version }}" sh -c "mvn clean compile -f project"
 
       - uses: actions/upload-artifact@v3
         with:
