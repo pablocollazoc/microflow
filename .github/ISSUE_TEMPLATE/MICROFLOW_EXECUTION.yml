@@ -1,7 +1,7 @@
 name: Microflow execution
 description: Execute the migrate workflow on a repository.
 title: "Microflow execution for the project user/projectname"
-labels: ["kind/microflow-start"]
+labels: ["microflow-start"]
 body:
   - type: markdown
     attributes:
