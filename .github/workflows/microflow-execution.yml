@@ -5,12 +5,12 @@ on:
   workflow_dispatch:
     inputs:
       autor_proyecto:
-        description: 'Autor/proyecto a analizar'
+        description: "Autor/proyecto a analizar"
         required: true
-        default: ''
+        default: ""
       java_version:
         type: choice
-        description: 'Java version'
+        description: "Java version"
         required: true
         options:
           - jdk-8
@@ -46,7 +46,7 @@ jobs:
       - name: Checkout input project
         uses: actions/checkout@v3
         with:
-          repository: ${{ jobs.retrieve-project.outputs.PROJECT }}
+          repository: ${{ job.outputs.PROJECT }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add project to directory
@@ -87,7 +87,7 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: 3.8
-          cache: 'pip'
+          cache: "pip"
 
       - name: Install python dependencies
         run: pip install -r maven_sonarscanner/requirements.txt
@@ -112,7 +112,6 @@ jobs:
     needs: retrieve-project
     runs-on: ubuntu-20.04
     steps:
-
       - name: Checkout microflow project
         uses: actions/checkout@v3
 
@@ -139,7 +138,7 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: 3.8
-          cache: 'pip'
+          cache: "pip"
 
       - name: Install python dependencies
         run: pip install -r maven_sonarscanner/requirements.txt
@@ -165,7 +164,7 @@ jobs:
 
   web-update:
     runs-on: ubuntu-20.04
-    needs: [sonarqube-scanner, checkstyle-spotbugs]
+    needs: [retrieve-project, sonarqube-scanner, checkstyle-spotbugs]
     steps:
       - name: Checkout to ghpages branch
         uses: actions/checkout@v3
@@ -215,7 +214,7 @@ jobs:
           sed -i "1s|^|---\nlayout: default\ntitle: Spotbugs\npermalink: \/${charts_file%%-charts.html}\/spotbugs\/\n---\n<section id=\"downloads\">  \n<a onclick=\"window.history.back\(\)\">Back</a></section>\n\n |" analysis_history/${charts_file%%-charts.html}/$spotbugs_file
 
           git add _posts _includes analysis_history/
-          git commit -m "Updated gh page with ${{ jobs.retrieve-project.outputs.PROJECT }} analysis"
+          git commit -m "Updated gh page with ${{ needs.retrieve-project.outputs.PROJECT }} analysis"
 
           git push
 
