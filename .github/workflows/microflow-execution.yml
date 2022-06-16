@@ -21,6 +21,7 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ISSUE_NUMBER: ${{ github.event.issue.number }}
 
 jobs:
   retrieve-project:
@@ -49,7 +50,7 @@ jobs:
       - name: Return error
         if: ${{ always() && steps.parsing.outcome == 'failure' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
           --body "#### :x: The introduced repository was not found
 
             In case it is a private repository, you should have the access permissions.
@@ -90,7 +91,7 @@ jobs:
       - name: Return error
         if: ${{ always() && steps.compile.outcome == 'failure' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
           --body "#### :x: The introduced repository does not compile
 
             Tests could be failing.
@@ -102,7 +103,7 @@ jobs:
       - name: Return success
         if: ${{ always() && steps.compile.outcome == 'success' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
           --body "#### :heavy_check_mark: The introduced project compiles successfully
 
             The SonarQube analysis has started..."
@@ -139,7 +140,7 @@ jobs:
       - name: Return error
         if: ${{ always() && steps.retrieve-results.outcome == 'failure' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
           --body "#### :x: The sonar scanner did not end correctly
 
           See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
@@ -147,7 +148,7 @@ jobs:
       - name: Return success
         if: ${{ always() && steps.retrieve-results.outcome == 'success' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
           --body "#### :heavy_check_mark: The SonarQube scanner ended successfully
 
             The checkstyle and spotbugs analysis have started..."
@@ -201,7 +202,7 @@ jobs:
       - name: Return error
         if: ${{ always() && steps.checkstyle.outcome == 'failure' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
           --body "#### :x: The checkstyle scan did not end correctly
 
           See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
@@ -209,7 +210,7 @@ jobs:
       - name: Return success
         if: ${{ always() && steps.checkstyle.outcome == 'success' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
           --body "#### :heavy_check_mark: The checkstyle scan ended successfully
 
             Publishing the results on the github page..."
@@ -246,7 +247,7 @@ jobs:
       - name: Return error
         if: ${{ always() && steps.spotbugs.outcome == 'failure' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
           --body "#### :x: The spotbugs scan did not end correctly
 
           See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
@@ -254,7 +255,7 @@ jobs:
       - name: Return success
         if: ${{ always() && steps.spotbugs.outcome == 'success' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
           --body "#### :heavy_check_mark: The spotbugs scan ended successfully
 
             Publishing the results on the github page..."
@@ -339,7 +340,7 @@ jobs:
       - name: Return error
         if: ${{ always() && steps.build.outcome == 'failure' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
           --body "#### :x: The project did not build correctly
           Tests could be failing.
 
@@ -348,5 +349,5 @@ jobs:
       - name: Return success
         if: ${{ always() && steps.build.outcome == 'success' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
           --body "#### :heavy_check_mark: The project has build successfully"
