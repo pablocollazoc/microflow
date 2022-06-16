@@ -31,7 +31,7 @@ jobs:
         id: parsing
         shell: python
         env:
-          BODY: ${{ github.event.issue.number }}
+          BODY: ${{ github.event.issue.body }}
         run: |
           import os
           import re
@@ -46,7 +46,7 @@ jobs:
       - name: Return error
         if: ${{ always() && steps.parsing.outcome == 'failure' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue }}" \
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
           --body "#### :x: The introduced repository was not found
 
             In case it is a private repository, you should have the access permissions.
@@ -55,7 +55,7 @@ jobs:
       - name: Return success
         if: ${{ always() && steps.parsing.outcome == 'success' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue }}" \
+          gh issue comment -R "${{github.repository}}" "${{ github.event.number }}" \
           --body "#### :heavy_check_mark: The introduced was found
 
             Checking if the project compiles..."
@@ -70,7 +70,7 @@ jobs:
       - name: Return error
         if: ${{ always() && steps.checkout.outcome == 'failure' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue }}" \
+          gh issue comment -R "${{github.repository}}" "${{ github.event.number }}" \
           --body "#### :x: The introduced repository is private
 
             You should have the access permissions.
@@ -87,7 +87,7 @@ jobs:
       - name: Return error
         if: ${{ always() && steps.compile.outcome == 'failure' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue }}" \
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
           --body "#### :x: The introduced repository does not compile
 
             Tests could be failing.
@@ -99,7 +99,7 @@ jobs:
       - name: Return success
         if: ${{ always() && steps.compile.outcome == 'success' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue }}" \
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
           --body "#### :heavy_check_mark: The introduced project compiles successfully
 
             The SonarQube analysis has started..."
@@ -136,7 +136,7 @@ jobs:
       - name: Return error
         if: ${{ always() && steps.retrieve-results.outcome == 'failure' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue }}" \
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
           --body "#### :x: The sonar scanner did not end correctly
 
           See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
@@ -144,7 +144,7 @@ jobs:
       - name: Return success
         if: ${{ always() && steps.retrieve-results.outcome == 'success' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue }}" \
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
           --body "#### :heavy_check_mark: The SonarQube scanner ended successfully
 
             The checkstyle and spotbugs analysis have started..."
@@ -198,7 +198,7 @@ jobs:
       - name: Return error
         if: ${{ always() && steps.checkstyle.outcome == 'failure' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue }}" \
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
           --body "#### :x: The checkstyle scan did not end correctly
 
           See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
@@ -206,7 +206,7 @@ jobs:
       - name: Return success
         if: ${{ always() && steps.checkstyle.outcome == 'success' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue }}" \
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
           --body "#### :heavy_check_mark: The checkstyle scan ended successfully
 
             Publishing the results on the github page..."
@@ -243,7 +243,7 @@ jobs:
       - name: Return error
         if: ${{ always() && steps.spotbugs.outcome == 'failure' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue }}" \
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
           --body "#### :x: The spotbugs scan did not end correctly
 
           See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
@@ -251,7 +251,7 @@ jobs:
       - name: Return success
         if: ${{ always() && steps.spotbugs.outcome == 'success' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue }}" \
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
           --body "#### :heavy_check_mark: The spotbugs scan ended successfully
 
             Publishing the results on the github page..."
@@ -336,7 +336,7 @@ jobs:
       - name: Return error
         if: ${{ always() && steps.build.outcome == 'failure' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue }}" \
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
           --body "#### :x: The project did not build correctly
           Tests could be failing.
 
@@ -345,5 +345,5 @@ jobs:
       - name: Return success
         if: ${{ always() && steps.build.outcome == 'success' }}
         run: |
-          gh issue comment -R "${{github.repository}}" "${{ github.event.issue }}" \
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
           --body "#### :heavy_check_mark: The project has build successfully"
