@@ -75,9 +75,9 @@ jobs:
         if: ${{ always() && steps.checkout.outcome == 'failure' }}
         run: |
           gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
-          --body "#### :x: The introduced repository is private
+          --body "#### :x: The introduced repository was not found
 
-            You should have the access permissions.
+            In case it is a private repository, you should have the access permissions.
             See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
 
       - name: Add project to directory
