@@ -42,7 +42,7 @@ jobs:
 
           print(f'::set-output name=repo_name::{repo_name}')
           print(f'::set-output name=jdk_version::{jdk_version}')
-        
+
       - name: Return error
         if: ${{ always() && steps.parsing.outcome == 'failure' }}
         run: |
@@ -93,7 +93,7 @@ jobs:
             Tests could be failing.
             Check that the project compiles correctly in a local environment.
             Check if the introduced jdk is the one used in this project.
-            
+
             See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
 
       - name: Return success
