@@ -19,6 +19,9 @@ on:
     types:
       - labeled
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
   retrieve-project:
     runs-on: ubuntu-20.04
