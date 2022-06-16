@@ -2,19 +2,19 @@
 name: microflow-execution
 
 on:
-  workflow_dispatch:
-    inputs:
-      autor_proyecto:
-        description: "Autor/proyecto a analizar"
-        required: true
-        default: ""
-      java_version:
-        type: choice
-        description: "Java version"
-        required: true
-        options:
-          - jdk-8
-          - jdk-11
+  #workflow_dispatch:
+  #  inputs:
+  #    autor_proyecto:
+  #      description: "Autor/proyecto a analizar"
+  #      required: true
+  #      default: ""
+  #    java_version:
+  #      type: choice
+  #      description: "Java version"
+  #      required: true
+  #      options:
+  #        - jdk-8
+  #        - jdk-11
   issues:
     types:
       - labeled
@@ -43,18 +43,66 @@ jobs:
           print(f'::set-output name=repo_name::{repo_name}')
           print(f'::set-output name=jdk_version::{jdk_version}')
 
+      - name: Return error
+        if: ${{ always() && steps.parsing.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          --body "#### :x: The introduced repository was not found
+
+            In case it is a private repository, you should have the access permissions.
+            See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.parsing.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "${{ github.event.number }}" \
+          --body "#### :heavy_check_mark: The introduced repository was found
+
+            Checking if the project compiles..."
+
       - name: Checkout input project
         uses: actions/checkout@v3
+        id: checkout
         with:
           repository: ${{ steps.parsing.outputs.repo_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Return error
+        if: ${{ always() && steps.checkout.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "${{ github.event.number }}" \
+          --body "#### :x: The introduced repository is private
+
+            You should have the access permissions.
+            See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
 
       - name: Add project to directory
         run: mkdir ../project && mv * ../project && mv ../project .
 
       - name: Check correct compile of project
+        id: compile
         run: |
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ steps.parsing.outputs.jdk_version }}" sh -c "mvn clean compile -f project"
+
+      - name: Return error
+        if: ${{ always() && steps.compile.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          --body "#### :x: The introduced repository does not compile
+
+            Tests could be failing.
+            Check that the project compiles correctly in a local environment.
+            Check if the introduced jdk is the one used in this project.
+
+            See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.compile.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          --body "#### :heavy_check_mark: The introduced project compiles successfully
+
+            The SonarQube analysis has started..."
 
       - uses: actions/upload-artifact@v3
         with:
@@ -78,10 +126,28 @@ jobs:
         run: JDK_VERSION=${{ needs.retrieve-project.outputs.JDK }} PROJECT_PATH=./project docker-compose up -d
 
       - name: Retrieve scanner results
+        timeout-minutes: 15
+        id: retrieve-results
         run: |
           while [[ $(docker container ps -q -f status=exited) == "" ]]; do
             true
           done
+
+      - name: Return error
+        if: ${{ always() && steps.retrieve-results.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          --body "#### :x: The sonar scanner did not end correctly
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.retrieve-results.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          --body "#### :heavy_check_mark: The SonarQube scanner ended successfully
+
+            The checkstyle and spotbugs analysis have started..."
 
       - name: setup python
         uses: actions/setup-python@v3
@@ -122,11 +188,28 @@ jobs:
           name: project
 
       - name: Checkstyle execution and result publishing
+        id: checkstyle
         run: |
           cd project
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ needs.retrieve-project.outputs.JDK }}" sh -c "mvn checkstyle:checkstyle-aggregate"
           mkdir checkstyle_results
           cp -r ./target/site checkstyle_results/
+
+      - name: Return error
+        if: ${{ always() && steps.checkstyle.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          --body "#### :x: The checkstyle scan did not end correctly
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.checkstyle.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          --body "#### :heavy_check_mark: The checkstyle scan ended successfully
+
+            Publishing the results on the github page..."
 
       - name: Save checkstyle results
         uses: actions/upload-artifact@v3
@@ -144,6 +227,7 @@ jobs:
         run: pip install -r maven_sonarscanner/requirements.txt
 
       - name: Spotbugs execution and result publishing
+        id: spotbugs
         run: |
           cd project
           results=$(docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ needs.retrieve-project.outputs.JDK }}" sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:check -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST -fn")
@@ -155,6 +239,22 @@ jobs:
           if [[ -z $(echo $results | grep "BugInstance size is") ]]; then
             echo "## NO BUGS FOUND IN THE PROJECT" > spotbugs_results/*bug_report.md
           fi
+
+      - name: Return error
+        if: ${{ always() && steps.spotbugs.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          --body "#### :x: The spotbugs scan did not end correctly
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.spotbugs.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          --body "#### :heavy_check_mark: The spotbugs scan ended successfully
+
+            Publishing the results on the github page..."
 
       - name: Save spotbugs results
         uses: actions/upload-artifact@v3
@@ -228,6 +328,22 @@ jobs:
         with:
           name: project
       - name: build & test project
+        id: build
         run: |
           cd project
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ needs.retrieve-project.outputs.JDK }}" sh -c "mvn clean verify -DskipITs"
+
+      - name: Return error
+        if: ${{ always() && steps.build.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          --body "#### :x: The project did not build correctly
+          Tests could be failing.
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "${{ github.event.issue.number }}" \
+          --body "#### :heavy_check_mark: The project has build successfully"
