@@ -4,7 +4,7 @@ name: release
 on:
   pull_request:
     types: [closed]
-    branches: ['main', 'main-*']
+    branches: ["main", "main-*"]
 
 jobs:
   release:
@@ -23,7 +23,8 @@ jobs:
         id: get_version
         if: contains(github.event.pull_request.labels.*.name, 'kind/release')
         run: |
-          VERSION=$(echo ${{ github.event.pull_request.labels.*.name }} | grep -E '^[[:digit:]]+.[[:digit:]]+.[[:digit:]]$')
+          TAGS=$(echo ${{ github.event.pull_request.labels.*.name }})
+          VERSION=$( echo $TAGS | grep -E '^[[:digit:]]+.[[:digit:]]+.[[:digit:]]$')
           if [[ -n $VERSION ]]; then
             echo "::set-output name=version::$VERSION"
           fi
