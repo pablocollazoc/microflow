@@ -1,5 +1,0 @@
----
-name: dockerhub-release
-
-on:
-  workflow_dispatch:
