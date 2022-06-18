@@ -18,7 +18,7 @@ services:
       - sonarqube
     build:
       context: .
-      dockerfile: maven_sonarscanner/Dockerfile
+      dockerfile: Dockerfile
       args:
         JDK_VERSION: ${JDK_VERSION}
     volumes:
