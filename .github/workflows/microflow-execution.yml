@@ -127,7 +127,9 @@ jobs:
           name: project
 
       - name: Docker compose up
-        run: JDK_VERSION=${{ needs.retrieve-project.outputs.JDK }} PROJECT_PATH=./project docker-compose up -d
+        run: |
+          cd maven_sonarscanner
+          JDK_VERSION=${{ needs.retrieve-project.outputs.JDK }} PROJECT_PATH=../project docker-compose up -d
 
       - name: Retrieve scanner results
         timeout-minutes: 15
@@ -176,7 +178,9 @@ jobs:
           path: ./scanner_results
 
       - name: Docker compose down
-        run: docker-compose down -v
+        run: |
+          cd maven_sonarscanner
+          docker-compose down -v
 
   checkstyle-spotbugs:
     needs: retrieve-project
