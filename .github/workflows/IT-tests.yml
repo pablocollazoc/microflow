@@ -1,0 +1,6 @@
+---
+name: IT-tests-verify
+
+on:
+  pull-request:
+    branches: []
