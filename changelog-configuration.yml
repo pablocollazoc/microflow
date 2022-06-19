@@ -1,0 +1,30 @@
+changelog_type: 'pull_request' # or 'pull_request'
+header_prefix: 'Version:'
+commit_changelog: true
+comment_changelog: true
+include_unlabeled_changes: true
+unlabeled_group_title: 'Unlabeled Changes'
+group_config:
+  - title: Bug Fixes
+    labels:
+      - kind/bug
+      - kind/bugfix
+  - title: Hotfix
+    labels:
+      - kind/hotfix
+  - title: Code Improvements
+    labels:
+      - kind/improvements
+      - kind/enhancement
+  - title: New Features
+    labels:
+      - kind/feature
+      - kind/refactoring
+  - title: Documentation Updates
+    labels:
+      - kind/docs
+      - kind/documentation
+      - kind/doc
+  - title: Test
+    labels:
+      - kind/test
