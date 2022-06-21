@@ -28,5 +28,5 @@ body:
     attributes:
       label: Deploy the project
       options:
-      - label: yes
+      - label: "yes"
 
