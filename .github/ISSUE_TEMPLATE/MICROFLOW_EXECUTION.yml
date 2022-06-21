@@ -24,3 +24,9 @@ body:
         - jdk-11
     validations:
       required: true
+  - type: checkboxes
+    attributes:
+      label: Deploy the project
+      options:
+      - label: "yes"
+
