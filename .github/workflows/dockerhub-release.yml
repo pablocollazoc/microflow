@@ -71,6 +71,7 @@ jobs:
           RELEASE_IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:1
         run: |
           cd project
+          mvn clean verify -DskipITs
           docker-compose up
           docker-compose build -- \                                
             --tag ${{ env.RELEASE_IMAGE }} \                                                           
