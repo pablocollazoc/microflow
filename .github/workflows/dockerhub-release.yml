@@ -38,6 +38,7 @@ jobs:
           path: .
   deploy:
     runs-on: ubuntu-20.04
+    needs: retrieve-project
     steps:
       - name: Get project
         id: get-project
