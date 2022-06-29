@@ -3,3 +3,65 @@ name: dockerhub-release
 
 on:
   workflow_dispatch:
+    inputs:
+      autor_proyecto:
+        description: "Autor/proyecto a analizar"
+        required: true
+        default: ""
+      java_version:
+        type: choice
+        description: "Java version"
+        required: true
+        options:
+          - jdk-8
+          - jdk-11
+
+jobs:
+  retrieve-project:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout input project
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.inputs.autor_proyecto }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add project to directory
+        run: mkdir ../project && mv * ../project && mv ../project .
+
+      - name: Check correct compile of project
+        run: |
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn clean compile -f project"
+      - uses: actions/upload-artifact@v3
+        with:
+          name: project
+          path: .
+  deploy:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Get project
+        id: get-project
+        uses: actions/download-artifact@v3
+        with:
+          name: project
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build & Push Image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          RELEASE_IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.RELEASE_REVISION }}
+        run: |
+          cd project
+          docker-compose build \                                
+            --tag ${{ env.RELEASE_IMAGE }} \                                                           
+            --push \
