@@ -72,7 +72,6 @@ jobs:
         run: |
           cd project
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean verify -DskipITs"
-          docker-compose up
           docker-compose build -- \                                
             --tag ${{ env.RELEASE_IMAGE }} \                                                           
             --push
