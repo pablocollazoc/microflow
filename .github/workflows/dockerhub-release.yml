@@ -73,4 +73,4 @@ jobs:
           cd project
           docker-compose build \                                
             --tag ${{ env.RELEASE_IMAGE }} \                                                           
-            --push \
+            --push
