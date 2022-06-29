@@ -72,6 +72,6 @@ jobs:
         run: |
           cd project
           ls .
-          docker-compose build \                                
+          docker-compose build -- \                                
             --tag ${{ env.RELEASE_IMAGE }} \                                                           
             --push
