@@ -72,5 +72,7 @@ jobs:
         run: |
           cd project
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean verify -DskipITs"
-          docker-compose up --no-start
-          docker-compose push --
+          cd order-service
+          docker build -t microflow-test .
+          docker tag microflow-test:latest public.ecr.aws/o0g9w9v6/microflow-test:latest
+          docker push public.ecr.aws/o0g9w9v6/microflow-test:latest
