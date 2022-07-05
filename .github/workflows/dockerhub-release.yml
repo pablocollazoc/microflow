@@ -60,16 +60,17 @@ jobs:
           aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: my-github-actions-role
 
       - name: Login to Amazon ECR
-        id: login-ecr
+        id: login-ecr-public
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          registry-type: 'public'
 
       - name: Build & Push Image
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          RELEASE_IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:1
+          ECR_REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
+          RELEASE_IMAGE: ${{ steps.login-ecr-public.outputs.registry }}/${{ env.ECR_REPOSITORY }}:1
         run: |
           cd project
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean verify -DskipITs"
