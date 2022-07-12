@@ -74,14 +74,16 @@ jobs:
         run: |
           cd project
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean verify -DskipITs"
-          cd order-service
-          docker build -t microflow-test .
-          docker tag microflow-test:latest public.ecr.aws/o0g9w9v6/microflow-test:latest
-          docker push public.ecr.aws/o0g9w9v6/microflow-test:latest
+          docker-compose build
+          docker compose images | awk '(NR>1) { print $2 }' > image_names
+          export OLD_VERSION=latest
+          export VERSION=${env.ECR_REPOSITORY}
+          cat image_names | xargs -I{} docker tag {}:$OLD_VERSION env.ECR_REPOSITORY/{}:latest
+          cat image_names | xargs -I{} docker push -a {}
 
       - name: Deploy to Kubernetes cluster
         uses: kodermax/kubectl-aws-eks@master
         env:
           RELEASE_IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
         with:
-          args: create deployment my-pod --image=public.ecr.aws/o0g9w9v6/microflow-test:latest
+          args: apply -f kubernetes-manifest.yaml
