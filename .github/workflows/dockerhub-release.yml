@@ -83,7 +83,7 @@ jobs:
 
       - name: Tag images with ECR prefix
         run: |
-          image=$(grep image: kubernetes-manifest.yaml | awk '{$1=$1};1' | rev | cut -d ' ' -f 1 | rev)
+          image=$(grep image: project/kubernetes-manifest.yaml | awk '{$1=$1};1' | rev | cut -d ' ' -f 1 | rev)
           sed -i "s/image: /image: ${{ steps.login-ecr-public.outputs.registry }}/g" project/kubernetes-manifest.yaml
 
       - name: Deploy to Kubernetes cluster
