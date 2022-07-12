@@ -74,7 +74,9 @@ jobs:
           cd project
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean verify -DskipITs"
           docker-compose build
-          docker-compose images | awk '(NR>1) { print $2 }' > image_names 
+          echo $(docker-compose images)
+          docker-compose images | awk '(NR>1) { print $2 }' > image_names
+          echo $(docker-compose images)
           cat image_names | xargs -I{} {} ${{ steps.login-ecr-public.outputs.registry }}/{}
           cat image_names | xargs -I{} docker push -a {}
 
@@ -83,4 +85,4 @@ jobs:
         env:
           RELEASE_IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
         with:
-          args: apply -f kubernetes-manifest.yaml
+          args: apply -f project/kubernetes-manifest.yaml
