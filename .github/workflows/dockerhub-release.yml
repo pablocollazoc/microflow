@@ -79,8 +79,7 @@ jobs:
         run: |
           cd project
           docker-compose images | awk '(NR>1) { print $2 }' > image_names
-          cat image_names
-          echo hola
+          docker-compose images
           cat image_names | xargs -I{} {} ${{ steps.login-ecr-public.outputs.registry }}/{}
           cat image_names | xargs -I{} docker push -a {}
 
