@@ -67,18 +67,24 @@ jobs:
         with:
           registry-type: "public"
 
-      - name: Build & Push Image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
+      - name: Build Images
         run: |
           cd project
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean verify -DskipITs"
           docker-compose build
-          echo $(docker-compose images)
+
+      - name: Push Images to ECR registry
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
+        run: |
           docker-compose images | awk '(NR>1) { print $2 }' > image_names
-          echo $(docker-compose images)
           cat image_names | xargs -I{} {} ${{ steps.login-ecr-public.outputs.registry }}/{}
           cat image_names | xargs -I{} docker push -a {}
+
+      - name: Tag images with ECR prefix
+        run: |
+          image=$(grep image: kubernetes-manifest.yaml | awk '{$1=$1};1' | rev | cut -d ' ' -f 1 | rev)
+          sed -i "s/image: /image: ${{ steps.login-ecr-public.outputs.registry }}/g" project/kubernetes-manifest.yaml
 
       - name: Deploy to Kubernetes cluster
         uses: kodermax/kubectl-aws-eks@master
