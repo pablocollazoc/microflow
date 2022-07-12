@@ -70,15 +70,12 @@ jobs:
       - name: Build & Push Image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
-          RELEASE_IMAGE: ${{ steps.login-ecr-public.outputs.registry }}/${{ env.ECR_REPOSITORY }}:1
         run: |
           cd project
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean verify -DskipITs"
           docker-compose build
-          docker compose images | awk '(NR>1) { print $2 }' > image_names
-          export OLD_VERSION=latest
-          export VERSION=${env.ECR_REPOSITORY}
-          cat image_names | xargs -I{} docker tag {}:$OLD_VERSION ${{ steps.login-ecr-public.outputs.registry }}/{}:latest
+          docker-compose images | awk '(NR>1) { print $2 }' > image_names 
+          cat image_names | xargs -I{} {} ${{ steps.login-ecr-public.outputs.registry }}/{}
           cat image_names | xargs -I{} docker push -a {}
 
       - name: Deploy to Kubernetes cluster
