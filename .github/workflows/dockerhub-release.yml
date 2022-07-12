@@ -26,7 +26,7 @@ env:
   KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
   KUBE_NAMESPACE: default
   ECR_REPOSITORY: my-app
-  ECR_REGISTRY: public.ecr.aws/o0g9w9v6/microflow-test/
+  ECR_REGISTRY: public.ecr.aws/o0g9w9v6/microflow-test
 
 jobs:
   retrieve-project:
@@ -75,19 +75,16 @@ jobs:
           docker-compose build
 
       - name: Push Images to ECR registry
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
         run: |
           cd project
-          docker-compose images | awk '(NR>1) { print $2 }' > image_names
-          docker-compose images
+          docker-compose images | awk '(NR>1) { print $4 }' > image_names
           cat image_names | xargs -I{} docker tag {} $ECR_REGISTRY/{}
           cat image_names | xargs -I{} docker push -a {}
 
       - name: Tag images with ECR prefix
         run: |
           image=$(grep image: project/kubernetes-manifest.yaml | awk '{$1=$1};1' | rev | cut -d ' ' -f 1 | rev)
-          sed -i "s/image: /image: $ECR_REGISTRY/g" project/kubernetes-manifest.yaml
+          sed -i "s/image: /image: $ECR_REGISTRY\//g" project/kubernetes-manifest.yaml
 
       - name: Deploy to Kubernetes cluster
         uses: kodermax/kubectl-aws-eks@master
