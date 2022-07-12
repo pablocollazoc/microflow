@@ -25,7 +25,7 @@ env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
   KUBE_NAMESPACE: default
-  ECR_REPOSITORY: microflow-test
+  ECR_REPOSITORY: my-app
 
 jobs:
   retrieve-project:
@@ -78,7 +78,7 @@ jobs:
           docker compose images | awk '(NR>1) { print $2 }' > image_names
           export OLD_VERSION=latest
           export VERSION=${env.ECR_REPOSITORY}
-          cat image_names | xargs -I{} docker tag {}:$OLD_VERSION env.ECR_REPOSITORY/{}:latest
+          cat image_names | xargs -I{} docker tag {}:$OLD_VERSION ${{ steps.login-ecr-public.outputs.registry }}/{}:latest
           cat image_names | xargs -I{} docker push -a {}
 
       - name: Deploy to Kubernetes cluster
