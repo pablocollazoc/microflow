@@ -73,6 +73,21 @@ jobs:
           cd project
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean verify -DskipITs"
           docker-compose build
-          docker-compose images
+          docker image ls
 
-      
+      - name: Push Images to ECR registry
+        run: |
+          cd project
+          docker-compose images | awk '(NR>1) { print $4 }' > image_names
+          echo $(cat image_names)
+          cat image_names | xargs -I{} docker tag {} $ECR_REGISTRY/{}
+          cat image_names | xargs -I{} docker push -a $ECR_REGISTRY/{}
+
+      - name: Tag images with ECR prefix
+        run: |
+          sed -i "s|image: |image: $ECR_REGISTRY/|g" project/kubernetes-manifest.yaml
+
+      - name: Deploy to Kubernetes cluster
+        uses: kodermax/kubectl-aws-eks@master
+        with:
+          args: apply -f project/kubernetes-manifest.yaml
