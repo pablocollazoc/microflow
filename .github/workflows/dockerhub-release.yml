@@ -78,13 +78,13 @@ jobs:
         run: |
           cd project
           docker-compose images | awk '(NR>1) { print $4 }' > image_names
+          echo $(cat image_names)
           cat image_names | xargs -I{} docker tag {} $ECR_REGISTRY/{}
-          cat image_names | xargs -I{} docker push -a {}
+          cat image_names | xargs -I{} docker push -a $ECR_REGISTRY/{}
 
       - name: Tag images with ECR prefix
         run: |
-          image=$(grep image: project/kubernetes-manifest.yaml | awk '{$1=$1};1' | rev | cut -d ' ' -f 1 | rev)
-          sed -i "s/image: /image: $ECR_REGISTRY\//g" project/kubernetes-manifest.yaml
+          sed -i "s|image: |image: $ECR_REGISTRY/|g" project/kubernetes-manifest.yaml
 
       - name: Deploy to Kubernetes cluster
         uses: kodermax/kubectl-aws-eks@master
