@@ -91,7 +91,7 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          repo_name=$(echo ${{ github.event.inputs.autor_proyecto }} | cut '/' -f 2)
+          repo_name=$(echo ${{ github.event.inputs.autor_proyecto }} | cut -d '/' -f 2)
           sed -i "s|$repo_name|$REGISTRY/project|g" project/kubernetes-manifest.yaml
 
       - name: Deploy to Kubernetes cluster
