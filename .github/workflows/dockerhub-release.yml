@@ -218,7 +218,7 @@ jobs:
 
   build-test:
     runs-on: ubuntu-20.04
-    needs: [sonarqube-scanner, checkstyle-spotbugs]
+    needs: [retrieve-project, sonarqube-scanner, checkstyle-spotbugs]
     steps:
       - name: Get project
         id: get-project
