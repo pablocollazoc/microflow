@@ -3,3 +3,285 @@ name: dockerhub-release
 
 on:
   workflow_dispatch:
+    inputs:
+      autor_proyecto:
+        description: "Autor/proyecto a analizar"
+        required: true
+        default: ""
+      java_version:
+        type: choice
+        description: "Java version"
+        required: true
+        options:
+          - jdk-8
+          - jdk-11
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #ISSUE_NUMBER: ${{ github.event.issue.number }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+  KUBE_NAMESPACE: default
+
+jobs:
+  retrieve-project:
+    runs-on: ubuntu-20.04
+    if: contains(join(github.event.label.name, ', '), 'microflow-start')
+    outputs:
+      PROJECT: ${{ steps.parsing.outputs.repo_name }}
+      JDK: ${{ steps.parsing.outputs.jdk_version }}
+    steps:
+      - name: Checkout input project
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.inputs.autor_proyecto }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add project to directory
+        run: mkdir ../project && mv * ../project && mv ../project .
+
+      - name: Check correct compile of project
+        id: compile
+        run: |
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ steps.parsing.outputs.jdk_version }}" sh -c "mvn clean compile -f project"
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: project
+          path: .
+
+  sonarqube-scanner:
+    runs-on: ubuntu-20.04
+    needs: retrieve-project
+    steps:
+      - name: Checkout microflow project
+        uses: actions/checkout@v3
+
+      - name: Get project
+        id: get-project
+        uses: actions/download-artifact@v3
+        with:
+          name: project
+
+      - name: Docker compose up
+        run: |
+          cd maven_sonarscanner
+          JDK_VERSION=${{ needs.retrieve-project.outputs.JDK }} PROJECT_PATH=../project docker-compose up -d
+
+      - name: Retrieve scanner results
+        timeout-minutes: 15
+        id: retrieve-results
+        run: |
+          while [[ $(docker container ps -q -f status=exited) == "" ]]; do
+            true
+          done
+
+      - name: setup python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.8
+          cache: "pip"
+
+      - name: Install python dependencies
+        run: pip install -r maven_sonarscanner/requirements.txt
+
+      - name: Get analysis results via SonarQube API
+        run: |
+          python maven_sonarscanner/generate-results.py
+          mkdir scanner_results
+          mv *results.md scanner_results/
+          mv *charts.html scanner_results/
+
+      - name: Save scanner results
+        uses: actions/upload-artifact@v3
+        with:
+          name: scanner_results
+          path: ./scanner_results
+
+      - name: Docker compose down
+        run: |
+          cd maven_sonarscanner
+          docker-compose down -v
+
+  checkstyle-spotbugs:
+    needs: retrieve-project
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout microflow project
+        uses: actions/checkout@v3
+
+      - name: Get project
+        id: get-project
+        uses: actions/download-artifact@v3
+        with:
+          name: project
+
+      - name: Checkstyle execution and result publishing
+        id: checkstyle
+        run: |
+          cd project
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ needs.retrieve-project.outputs.JDK }}" sh -c "mvn checkstyle:checkstyle-aggregate"
+          mkdir checkstyle_results
+          cp -r ./target/site checkstyle_results/
+
+      - name: Save checkstyle results
+        uses: actions/upload-artifact@v3
+        with:
+          name: checkstyle_results
+          path: ./project/checkstyle_results
+
+      - name: setup python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.8
+          cache: "pip"
+
+      - name: Install python dependencies
+        run: pip install -r maven_sonarscanner/requirements.txt
+
+      - name: Spotbugs execution and result publishing
+        id: spotbugs
+        run: |
+          cd project
+          results=$(docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ needs.retrieve-project.outputs.JDK }}" sh -c "mvn clean compile com.github.spotbugs:spotbugs-maven-plugin:4.6.0.0:check -DincludeTests=true -Dplugins=com.h3xstream.findsecbugs:findsecbugs-plugin:LATEST -fn")
+          mkdir spotbugs_results
+          export bugs=$(echo "$results" | grep ERROR | grep line)
+          python ../spotbugs/generate-spotbugs-results.py
+          mv *bug_report.md spotbugs_results/
+
+          if [[ -z $(echo $results | grep "BugInstance size is") ]]; then
+            echo "## NO BUGS FOUND IN THE PROJECT" > spotbugs_results/*bug_report.md
+          fi
+
+      - name: Save spotbugs results
+        uses: actions/upload-artifact@v3
+        with:
+          name: spotbugs_results
+          path: ./project/spotbugs_results
+
+  web-update:
+    runs-on: ubuntu-20.04
+    needs: [sonarqube-scanner, checkstyle-spotbugs]
+    steps:
+      - name: Checkout to ghpages branch
+        uses: actions/checkout@v3
+        with:
+          ref: gh-pages
+
+      - name: Get results Sonar scanner
+        id: get-results-scanner
+        uses: actions/download-artifact@v3
+        with:
+          name: scanner_results
+
+      - name: Get results checkstyle
+        id: get-results-checkstyle
+        uses: actions/download-artifact@v3
+        with:
+          name: checkstyle_results
+
+      - name: Get results spotbugs
+        id: get-results-spotbugs
+        uses: actions/download-artifact@v3
+        with:
+          name: spotbugs_results
+
+      - name: Update github page
+        continue-on-error: true
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          sonar_file=$(ls . | grep *results.md)
+          charts_file=$(ls . | grep *charts.html)
+          mv -f "$sonar_file" _posts/
+          mv -f "$charts_file" _includes/
+
+          spotbugs_file=$(ls . | grep *bug_report.md)
+          mkdir analysis_history/${charts_file%%-charts.html}
+          mv -f $spotbugs_file analysis_history/${charts_file%%-charts.html}
+          mv -f site/checkstyle-aggregate.html analysis_history/${charts_file%%-charts.html}/${charts_file%%-charts.html}-checkstyle-aggregate.html
+
+          urls="<section id=\"downloads\"><a href=\"https://pablocollazoc.github.io/microflow/${charts_file%%-charts.html}/checkstyle\" class=\"btn\">Checkstyle results</a><a href=\"https://pablocollazoc.github.io/microflow/${charts_file%%-charts.html}/spotbugs\" class=\"btn\">Spotbugs results</a><a href=\"{{ site.github.repository_url }}\" class=\"btn btn-github\"><span class=\"icon\"></span>View on GitHub</a></section>"
+
+          sed -i "1s|^|---\nlayout: default\n---\n${urls}\n\n |" _posts/$sonar_file
+
+          sed -i "1s|^|---\nlayout: default\ntitle: Checkstyle\npermalink: \/${charts_file%%-charts.html}\/checkstyle\/\n---\n<section id=\"downloads\"><a onclick=\"window.history.back\(\)\">Back</a></section>\n\n |" analysis_history/${charts_file%%-charts.html}/${charts_file%%-charts.html}-checkstyle-aggregate.html
+
+          sed -i "1s|^|---\nlayout: default\ntitle: Spotbugs\npermalink: \/${charts_file%%-charts.html}\/spotbugs\/\n---\n<section id=\"downloads\">  \n<a onclick=\"window.history.back\(\)\">Back</a></section>\n\n |" analysis_history/${charts_file%%-charts.html}/$spotbugs_file
+
+          git add _posts _includes analysis_history/
+          git commit -m "Updated gh page with ${{ needs.retrieve-project.outputs.PROJECT }} analysis"
+
+          git push
+
+  build-test:
+    runs-on: ubuntu-20.04
+    needs: [sonarqube-scanner, checkstyle-spotbugs]
+    steps:
+      - name: Get project
+        id: get-project
+        uses: actions/download-artifact@v3
+        with:
+          name: project
+      - name: build & test project
+        id: build
+        run: |
+          cd project
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ needs.retrieve-project.outputs.JDK }}" sh -c "mvn clean verify -DskipITs"
+
+  deploy:
+    runs-on: ubuntu-20.04
+    needs: [retrieve-project, build-test]
+    steps:
+      - name: Get project
+        id: get-project
+        uses: actions/download-artifact@v3
+        with:
+          name: project
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Images
+        run: |
+          cd project
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean verify -DskipITs"
+          docker-compose build
+
+      - name: Create ECR registries and push images
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          AWS_DEFAULT_REGION: $AWS_REGION
+        run: |
+          cd project
+          docker image ls -f "reference=project_*" | awk '(NR>1) { print $1 }' > image_names
+          cat image_names | xargs -I{} docker tag {} $REGISTRY/{}:latest
+          cat image_names | xargs -I{} aws ecr create-repository \
+            --repository-name {} \
+            --image-scanning-configuration scanOnPush=true \
+            --region $AWS_REGION
+          cat image_names | xargs -I{} docker push $REGISTRY/{}:latest
+
+      - name: Tag images with ECR prefix
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          repo_name=$(echo ${{ needs.retrieve-project.outputs.PROJECT }} | cut -d '/' -f 2)
+          sed -i "s|$repo_name|$REGISTRY/project|g" project/kubernetes-manifest.yaml
+
+      - name: Deploy to Kubernetes cluster
+        uses: kodermax/kubectl-aws-eks@master
+        with:
+          args: apply -f project/kubernetes-manifest.yaml
+
