@@ -81,7 +81,7 @@ jobs:
           cat image_names | xargs -I{} docker tag {} $ECR_REGISTRY/{}:latest
 
           cat image_names | xargs -I{} aws ecr create-repository \
-          --repository-name $ECR_REGISTRY/{} \
+          --repository-name {} \
           --image-scanning-configuration scanOnPush=true \
           --region $AWS_REGION
 
