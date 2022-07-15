@@ -26,7 +26,7 @@ env:
   KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
   KUBE_NAMESPACE: default
   ECR_REPOSITORY: my-app
-  ECR_REGISTRY: public.ecr.aws/o0g9w9v6/microflow-test
+  ECR_REGISTRY: public.ecr.aws/o0g9w9v6
 
 jobs:
   retrieve-project:
@@ -75,17 +75,27 @@ jobs:
           docker-compose build
           docker image ls
 
-      - name: Push Images to ECR registry
-        run: |
+      - name: Create ECR registries and push images
+        uses: chrislennon/action-aws-cli@v1.1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - run: |
           cd project
           docker image ls -f "reference=project_*" | awk '(NR>1) { print $1 }' > image_names
           cat image_names | xargs -I{} docker tag {} $ECR_REGISTRY/{}:latest
-          docker image ls
-          cat image_names | xargs -I{} docker push $ECR_REGISTRY/{}:latest
 
+          cat image_names | xargs -I{} aws ecr create-repository \
+          --repository-name $ECR_REGISTRY/{} \
+          --image-scanning-configuration scanOnPush=true \
+          --region $AWS_REGION
+
+          cat image_names | xargs -I{} docker push $ECR_REGISTRY/{}:latest
+        
       - name: Tag images with ECR prefix
         run: |
-          sed -i "s|image: |image: $ECR_REGISTRY/|g" project/kubernetes-manifest.yaml
+          repo_name=$(echo ${{ github.event.inputs.autor_proyecto }} | cut '/' -f 2)
+          sed -i "s|$repo_name|$ECR_REGISTRY/project|g" project/kubernetes-manifest.yaml
 
       - name: Deploy to Kubernetes cluster
         uses: kodermax/kubectl-aws-eks@master
