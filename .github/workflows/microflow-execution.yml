@@ -36,6 +36,7 @@ jobs:
     outputs:
       PROJECT: ${{ steps.parsing.outputs.repo_name }}
       JDK: ${{ steps.parsing.outputs.jdk_version }}
+      DEPLOY: ${{ steps.parsing.outputs.deploy }}
     steps:
       - name: Get information from body
         id: parsing
@@ -49,9 +50,11 @@ jobs:
           rawform = str(os.environ['BODY'])
           repo_name = re.search(r"(### GitHub Repository\s*)(.*)", rawform).group(2)
           jdk_version = re.search(r"(### Java version used in the project\s*)(.*)", rawform).group(2)
+          deploy = re.search(r"(### Deploy the project\s*)(.*)", rawform).group(2)
 
           print(f'::set-output name=repo_name::{repo_name}')
           print(f'::set-output name=jdk_version::{jdk_version}')
+          print(f'::set-output name=deploy::{deploy}')
 
       - name: Return error
         if: ${{ always() && steps.parsing.outcome == 'failure' }}
@@ -365,6 +368,7 @@ jobs:
   deploy:
     runs-on: ubuntu-20.04
     needs: [retrieve-project, build-test]
+    if: ${{ needs.retrieve-project.outputs.DEPLOY == '- [X] yes' }}
     steps:
       - name: Get project
         id: get-project
