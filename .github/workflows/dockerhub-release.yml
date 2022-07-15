@@ -78,8 +78,7 @@ jobs:
       - name: Push Images to ECR registry
         run: |
           cd project
-          docker-compose images | awk '(NR>1) { print $4 }' > image_names
-          echo $(cat image_names)
+          docker image ls -f "reference=project_*" | awk '(NR>1) { print $1 }' > image_names
           cat image_names | xargs -I{} docker tag {} $ECR_REGISTRY/{}
           cat image_names | xargs -I{} docker push -a $ECR_REGISTRY/{}
 
