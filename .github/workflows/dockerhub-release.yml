@@ -80,7 +80,7 @@ jobs:
           cd project
           docker image ls -f "reference=project_*" | awk '(NR>1) { print $1 }' > image_names
           cat image_names | xargs -I{} docker tag {} $ECR_REGISTRY/{}:latest
-          cat image_names | xargs -I{} docker push -a $ECR_REGISTRY/{}:latest
+          cat image_names | xargs -I{} docker push $ECR_REGISTRY/{}:latest
 
       - name: Tag images with ECR prefix
         run: |
