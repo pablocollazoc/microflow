@@ -75,10 +75,6 @@ jobs:
           docker-compose build
 
       - name: Create ECR registries and push images
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: $AWS_REGION
         run: |
           cd project
           docker image ls -f "reference=project_*" | awk '(NR>1) { print $1 }' > image_names
@@ -90,6 +86,10 @@ jobs:
           --region $AWS_REGION
 
           cat image_names | xargs -I{} docker push $ECR_REGISTRY/{}:latest
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: $AWS_REGION
         
       - name: Tag images with ECR prefix
         run: |
