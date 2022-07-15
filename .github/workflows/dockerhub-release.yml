@@ -73,13 +73,12 @@ jobs:
           cd project
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean verify -DskipITs"
           docker-compose build
-          docker image ls
 
       - name: Create ECR registries and push images
-        uses: chrislennon/action-aws-cli@v1.1
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: $AWS_REGION
       - run: |
           cd project
           docker image ls -f "reference=project_*" | awk '(NR>1) { print $1 }' > image_names
