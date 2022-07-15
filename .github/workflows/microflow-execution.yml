@@ -364,7 +364,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-20.04
-    needs: retrieve-project
+    needs: [retrieve-project, build-test]
     steps:
       - name: Get project
         id: get-project
@@ -398,16 +398,16 @@ jobs:
           docker image ls -f "reference=project_*" | awk '(NR>1) { print $1 }' > image_names
           cat image_names | xargs -I{} docker tag {} $REGISTRY/{}:latest
           cat image_names | xargs -I{} aws ecr create-repository \
-          --repository-name {} \
-          --image-scanning-configuration scanOnPush=true \
-          --region $AWS_REGION
+            --repository-name {} \
+            --image-scanning-configuration scanOnPush=true \
+            --region $AWS_REGION
           cat image_names | xargs -I{} docker push $REGISTRY/{}:latest
 
       - name: Tag images with ECR prefix
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          repo_name=$(echo ${{ github.event.inputs.autor_proyecto }} | cut -d '/' -f 2)
+          repo_name=$(echo ${{ needs.retrieve-project.outputs.PROJECT }} | cut -d '/' -f 2)
           sed -i "s|$repo_name|$REGISTRY/project|g" project/kubernetes-manifest.yaml
 
       - name: Deploy to Kubernetes cluster
