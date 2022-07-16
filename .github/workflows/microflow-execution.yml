@@ -368,7 +368,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: packaged_project
-          path: ./project
+          path: .
 
   deploy:
     runs-on: ubuntu-20.04
