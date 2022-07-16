@@ -382,22 +382,70 @@ jobs:
           name: packaged_project
 
       - name: Configure AWS credentials
+        id: aws-login
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Return error
+        if: ${{ always() && steps.aws-login.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :x: Could not login in AWS
+          Check the used aws credentials.
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.aws-login.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :heavy_check_mark: Logged in AWS successfully"
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
+      - name: Return error
+        if: ${{ always() && steps.login-ecr.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :x: Could not login in AWS ECR
+          Check the used aws credentials.
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.login-ecr.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :heavy_check_mark: Logged in AWS ECR successfully"
+
       - name: Build Images
+        id: image-build
         run: |
           cd packaged_project
           docker-compose build
 
+      - name: Return error
+        if: ${{ always() && steps.image-build.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :x: The docker images that compose the project could not be build
+          A docker-compose file is needed in the root of the project in order to build it.
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.image-build.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :heavy_check_mark: Docker images for every service were built successfully"
+
       - name: Create ECR registries and push images
+        id: create-ecr
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           AWS_DEFAULT_REGION: $AWS_REGION
@@ -411,15 +459,67 @@ jobs:
             --region $AWS_REGION
           cat image_names | xargs -I{} docker push $REGISTRY/{}:latest
 
+      - name: Return error
+        if: ${{ always() && steps.create-ecr.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :x: The docker images that compose the project could not be pushed to the AWS ECR
+          Check the following requirements:
+            - The used aws credentials have rights to create AWS ECR repositories.
+            - The aws region used is the one where you want to deploy the project and the one where the cluster is located.
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.create-ecr.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :heavy_check_mark: Docker images were pushed to the private ECR registry successfully"
+
       - name: Tag images with ECR prefix
+        id: tag-images
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           repo_name=$(echo ${{ needs.retrieve-project.outputs.PROJECT }} | cut -d '/' -f 2)
           sed -i "s|$repo_name|$REGISTRY/project|g" packaged_project/kubernetes-manifest.yaml
 
+      - name: Return error
+        if: ${{ always() && steps.tag-images.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :x: The docker images that use the Kubernetes manifest could not be tagged with the ECR images
+          Check the following requirements:
+            - A Kubernetes manifest using the images composed by docker-compose exist in the root of the project (the image_name:tag should be the same).
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.tag-images.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :heavy_check_mark: Docker images were updated in the Kubernetes manifest successfully"
+
       - name: Deploy to Kubernetes cluster
+        id: deploy-k8s
         uses: kodermax/kubectl-aws-eks@master
         with:
           args: apply -f packaged_project/kubernetes-manifest.yaml
+
+      - name: Return error
+        if: ${{ always() && steps.deploy-k8s.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :x: The Kubernetes manifest could not be applied
+          Check the following requirements:
+            - Check the kubernetes manifest file, that should be named, **kubernetes-manifest.yml**
+            - A **KUBE_CONFIG_DATA** should be declared as a secret in the project, in order to set the the target cluster
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.deploy-k8s.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :heavy_check_mark: The project was successfully deployed to the AWS EKS cluster"
 
