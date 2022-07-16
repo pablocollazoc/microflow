@@ -116,7 +116,7 @@ jobs:
           sed -i "s|$repo_name|$REGISTRY/project|g" project/kubernetes-manifest.yaml
       
       - name: Create VPC for EKS
-        id: eks-cluster
+        id: eks-vpc
         uses: aws-actions/aws-cloudformation-github-deploy@master
         with:
           name: ${{ needs.retrieve-project.outputs.PROJECT }}-stack
