@@ -117,7 +117,7 @@ jobs:
       
       - name: Create VPC for EKS
         id: eks-vpc
-        uses: aws-actions/aws-cloudformation-github-deploy@master
+        uses: aws-actions/aws-cloudformation-github-deploy@v1.0.4
         with:
           name: ${{ needs.retrieve-project.outputs.PROJECT }}-stack
           template: https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml
