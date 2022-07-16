@@ -29,7 +29,7 @@ jobs:
   retrieve-project:
     runs-on: ubuntu-20.04
     outputs:
-      PROJECT_NAME: ${{ steps.parsing.outputs.repo_name }}
+      PROJECT_NAME: ${{ steps.compile.outputs.repo_name }}
       JDK: ${{ github.event.inputs.java_version }}
     steps:
       - name: Checkout input project
@@ -47,7 +47,7 @@ jobs:
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn clean compile -f project"
           repo_name=$(echo ${{ github.event.inputs.autor_proyecto }} | cut -d '/' -f 2)
 
-          print(f'::set-output name=repo_name::{repo_name}')
+          echo "::set-output name=repo_name::${repo_name}"
       - uses: actions/upload-artifact@v3
         with:
           name: project
