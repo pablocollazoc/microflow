@@ -365,6 +365,11 @@ jobs:
           gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
           --body "#### :heavy_check_mark: The project has build successfully"
 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: packaged_project
+          path: ./project
+
   deploy:
     runs-on: ubuntu-20.04
     needs: [retrieve-project, build-test]
@@ -374,7 +379,7 @@ jobs:
         id: get-project
         uses: actions/download-artifact@v3
         with:
-          name: project
+          name: packaged_project
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -389,8 +394,7 @@ jobs:
 
       - name: Build Images
         run: |
-          cd project
-          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-jdk-8 sh -c "mvn clean verify -DskipITs"
+          cd packaged_project
           docker-compose build
 
       - name: Create ECR registries and push images
@@ -398,7 +402,7 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           AWS_DEFAULT_REGION: $AWS_REGION
         run: |
-          cd project
+          cd packaged_project
           docker image ls -f "reference=project_*" | awk '(NR>1) { print $1 }' > image_names
           cat image_names | xargs -I{} docker tag {} $REGISTRY/{}:latest
           cat image_names | xargs -I{} aws ecr create-repository \
@@ -412,10 +416,10 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           repo_name=$(echo ${{ needs.retrieve-project.outputs.PROJECT }} | cut -d '/' -f 2)
-          sed -i "s|$repo_name|$REGISTRY/project|g" project/kubernetes-manifest.yaml
+          sed -i "s|$repo_name|$REGISTRY/project|g" packaged_project/kubernetes-manifest.yaml
 
       - name: Deploy to Kubernetes cluster
         uses: kodermax/kubectl-aws-eks@master
         with:
-          args: apply -f project/kubernetes-manifest.yaml
+          args: apply -f packaged_project/kubernetes-manifest.yaml
 
