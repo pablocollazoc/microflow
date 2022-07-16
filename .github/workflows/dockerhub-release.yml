@@ -29,7 +29,7 @@ jobs:
   retrieve-project:
     runs-on: ubuntu-20.04
     outputs:
-      PROJECT: ${{ github.event.inputs.autor_proyecto }}
+      PROJECT_NAME: ${{ steps.parsing.outputs.repo_name }}
       JDK: ${{ github.event.inputs.java_version }}
     steps:
       - name: Checkout input project
@@ -45,6 +45,9 @@ jobs:
         id: compile
         run: |
           docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn clean compile -f project"
+          repo_name=$(echo ${{ github.event.inputs.autor_proyecto }} | cut -d '/' -f 2)
+
+          print(f'::set-output name=repo_name::{repo_name}')
       - uses: actions/upload-artifact@v3
         with:
           name: project
@@ -112,14 +115,13 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          repo_name=$(echo ${{ needs.retrieve-project.outputs.PROJECT }} | cut -d '/' -f 2)
-          sed -i "s|$repo_name|$REGISTRY/project|g" project/kubernetes-manifest.yaml
+          sed -i "s|${{ needs.retrieve-project.outputs.PROJECT_NAME }}|$REGISTRY/project|g" project/kubernetes-manifest.yaml
       
       - name: Create VPC for EKS
         id: eks-vpc
         uses: aws-actions/aws-cloudformation-github-deploy@v1.0.4
         with:
-          name: ${{ needs.retrieve-project.outputs.PROJECT }}-stack
+          name: ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-stack
           template: https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml
           no-fail-on-empty-changeset: "1"
 
@@ -127,19 +129,19 @@ jobs:
         id: eks-cluster
         run: |
           sleep 60
-          aws cloudformation describe-stacks --stack-name ${{ needs.retrieve-project.outputs.PROJECT }}-stack
+          aws cloudformation describe-stacks --stack-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-stack
 
           rawoutput=$(aws cloudformation describe-stacks --stack-name microflow-stack |jq --raw-output '.Stacks[].Outputs[]')
           securitygroup=$(echo $rawoutput | jq --raw-output 'select(.OutputKey == "SecurityGroups").OutputValue')
           subnetids=$(echo $rawoutput | jq --raw-output 'select(.OutputKey == "SubnetIds").OutputValue')
 
-          aws eks create-cluster --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT }}-cluster --kubernetes-version 1.22 \
+          aws eks create-cluster --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster --kubernetes-version 1.22 \
           --role-arn arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/AmazonEKSClusterRole \
           --resources-vpc-config subnetIds=$subnetids,securityGroupIds=$securitygroup
 
           sleep 60
 
-          aws eks create-nodegroup --cluster-name ${{ needs.retrieve-project.outputs.PROJECT }}-cluster --nodegroup-name ${{ needs.retrieve-project.outputs.PROJECT }}-nodegroup \
+          aws eks create-nodegroup --cluster-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster --nodegroup-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-nodegroup \
             --subnets $(echo $subnetids | sed 's/,/ /g') --node-role arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/microflowClusterNodeGroupsRole \
             --scaling-config minSize=2,maxSize=3,desiredSize=3 --remote-access ec2SshKey=microflow-key-pair
 
@@ -147,5 +149,5 @@ jobs:
         run: |
           sleep 60
 
-          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT }}-cluster
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
           kubectl apply -f project/kubernetes-manifest.yaml
