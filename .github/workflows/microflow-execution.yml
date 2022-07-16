@@ -426,7 +426,7 @@ jobs:
       - name: Build Images
         id: image-build
         run: |
-          cd packaged_project
+          cd project
           docker-compose build
 
       - name: Return error
@@ -450,7 +450,7 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           AWS_DEFAULT_REGION: $AWS_REGION
         run: |
-          cd packaged_project
+          cd project
           docker image ls -f "reference=project_*" | awk '(NR>1) { print $1 }' > image_names
           cat image_names | xargs -I{} docker tag {} $REGISTRY/{}:latest
           cat image_names | xargs -I{} aws ecr create-repository \
@@ -482,7 +482,7 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           repo_name=$(echo ${{ needs.retrieve-project.outputs.PROJECT }} | cut -d '/' -f 2)
-          sed -i "s|$repo_name|$REGISTRY/project|g" packaged_project/kubernetes-manifest.yaml
+          sed -i "s|$repo_name|$REGISTRY/project|g" project/kubernetes-manifest.yaml
 
       - name: Return error
         if: ${{ always() && steps.tag-images.outcome == 'failure' }}
@@ -504,7 +504,7 @@ jobs:
         id: deploy-k8s
         uses: kodermax/kubectl-aws-eks@master
         with:
-          args: apply -f packaged_project/kubernetes-manifest.yaml
+          args: apply -f project/kubernetes-manifest.yaml
 
       - name: Return error
         if: ${{ always() && steps.deploy-k8s.outcome == 'failure' }}
