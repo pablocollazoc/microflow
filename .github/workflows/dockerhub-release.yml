@@ -125,7 +125,7 @@ jobs:
           template: https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml
           no-fail-on-empty-changeset: "1"
 
-      - name: Create and deploy to Kubernetes cluster
+      - name: Create Kubernetes cluster
         id: eks-cluster
         run: |
 
@@ -137,6 +137,10 @@ jobs:
           --role-arn arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/eksClusterRoleMicroflow \
           --resources-vpc-config subnetIds=$subnetids,securityGroupIds=$securitygroup
 
+          while [[ $(aws eks list-clusters |jq --raw-output .clusters[]) == "" ]]; do
+            sleep 60
+            true
+          done
 
           aws eks create-nodegroup --cluster-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster --nodegroup-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-nodegroup \
             --subnets $(echo $subnetids | sed 's/,/ /g') --node-role arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/microflowClusterNodeGroupsRole \
@@ -144,6 +148,11 @@ jobs:
 
       - name: Deploy to Kubernetes cluster
         run: |
+
+          while [[ $(aws eks list-nodegroups --cluster-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster |jq --raw-output .nodegroups[]) == "" ]]; do
+            sleep 60
+            true
+          done
 
           aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
           kubectl apply -f project/kubernetes-manifest.yaml
