@@ -128,17 +128,15 @@ jobs:
       - name: Create and deploy to Kubernetes cluster
         id: eks-cluster
         run: |
-          aws cloudformation describe-stacks --stack-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-stack
 
           rawoutput=$(aws cloudformation describe-stacks --stack-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-stack |jq --raw-output '.Stacks[].Outputs[]')
           securitygroup=$(echo $rawoutput | jq --raw-output 'select(.OutputKey == "SecurityGroups").OutputValue')
           subnetids=$(echo $rawoutput | jq --raw-output 'select(.OutputKey == "SubnetIds").OutputValue')
 
           aws eks create-cluster --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster --kubernetes-version 1.22 \
-          --role-arn arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/AmazonEKSClusterRole \
+          --role-arn arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/eksClusterRoleMicroflow \
           --resources-vpc-config subnetIds=$subnetids,securityGroupIds=$securitygroup
 
-          sleep 60
 
           aws eks create-nodegroup --cluster-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster --nodegroup-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-nodegroup \
             --subnets $(echo $subnetids | sed 's/,/ /g') --node-role arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/microflowClusterNodeGroupsRole \
@@ -146,7 +144,6 @@ jobs:
 
       - name: Deploy to Kubernetes cluster
         run: |
-          sleep 60
 
           aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
           kubectl apply -f project/kubernetes-manifest.yaml
