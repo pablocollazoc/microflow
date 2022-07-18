@@ -128,10 +128,9 @@ jobs:
       - name: Create and deploy to Kubernetes cluster
         id: eks-cluster
         run: |
-          sleep 60
           aws cloudformation describe-stacks --stack-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-stack
 
-          rawoutput=$(aws cloudformation describe-stacks --stack-name microflow-stack |jq --raw-output '.Stacks[].Outputs[]')
+          rawoutput=$(aws cloudformation describe-stacks --stack-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-stack |jq --raw-output '.Stacks[].Outputs[]')
           securitygroup=$(echo $rawoutput | jq --raw-output 'select(.OutputKey == "SecurityGroups").OutputValue')
           subnetids=$(echo $rawoutput | jq --raw-output 'select(.OutputKey == "SubnetIds").OutputValue')
 
