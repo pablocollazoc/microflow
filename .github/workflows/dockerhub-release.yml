@@ -137,7 +137,7 @@ jobs:
           --role-arn arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/eksClusterRoleMicroflow \
           --resources-vpc-config subnetIds=$subnetids,securityGroupIds=$securitygroup
 
-          aws eks wait cluster-active --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
+          aws eks wait cluster-active --cluster-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
 
           aws eks create-nodegroup --cluster-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster --nodegroup-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-nodegroup \
             --subnets $(echo $subnetids | sed 's/,/ /g') --node-role arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/microflowClusterNodeGroupsRole \
@@ -146,7 +146,7 @@ jobs:
       - name: Deploy to Kubernetes cluster
         run: |
 
-          aws eks wait nodegroup-active --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-nodegroup
+          aws eks wait nodegroup-active --nodegroup-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-nodegroup
 
           aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
           kubectl apply -f project/kubernetes-manifest.yaml
