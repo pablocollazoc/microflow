@@ -1,0 +1,152 @@
+name: dockerhub-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      autor_proyecto:
+        description: "Autor/proyecto a analizar"
+        required: true
+        default: ""
+      java_version:
+        type: choice
+        description: "Java version"
+        required: true
+        options:
+          - jdk-8
+          - jdk-11
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #ISSUE_NUMBER: ${{ github.event.issue.number }}
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+  KUBE_NAMESPACE: default
+
+jobs:
+  retrieve-project:
+    runs-on: ubuntu-20.04
+    outputs:
+      PROJECT_NAME: ${{ steps.compile.outputs.repo_name }}
+      JDK: ${{ github.event.inputs.java_version }}
+    steps:
+      - name: Checkout input project
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.inputs.autor_proyecto }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add project to directory
+        run: mkdir ../project && mv * ../project && mv ../project .
+
+      - name: Check correct compile of project
+        id: compile
+        run: |
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ github.event.inputs.java_version }}" sh -c "mvn clean compile -f project"
+          repo_name=$(echo ${{ github.event.inputs.autor_proyecto }} | cut -d '/' -f 2)
+
+          echo "::set-output name=repo_name::${repo_name}"
+      - uses: actions/upload-artifact@v3
+        with:
+          name: project
+          path: .
+
+  build-test:
+    runs-on: ubuntu-20.04
+    needs: retrieve-project
+    steps:
+      - name: Get project
+        id: get-project
+        uses: actions/download-artifact@v3
+        with:
+          name: project
+      - name: build & test project
+        id: build
+        run: |
+          cd project
+          docker run --rm --workdir /app -v"$(pwd)":/app maven:3.8.5-"${{ needs.retrieve-project.outputs.JDK }}" sh -c "mvn clean verify -DskipITs"
+      - uses: actions/upload-artifact@v3
+        with:
+          name: packaged_project
+          path: .
+
+  deploy:
+    runs-on: ubuntu-20.04
+    needs: [retrieve-project, build-test]
+    steps:
+      - name: Get project
+        id: get-project
+        uses: actions/download-artifact@v3
+        with:
+          name: packaged_project
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Images
+        run: |
+          cd project
+          docker-compose build
+      - name: Create ECR registries and push images
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          AWS_DEFAULT_REGION: $AWS_REGION
+        run: |
+          cd project
+          docker image ls -f "reference=project_*" | awk '(NR>1) { print $1 }' > image_names
+          cat image_names | xargs -I{} docker tag {} $REGISTRY/{}:latest
+          cat image_names | xargs -I{} aws ecr create-repository \
+            --repository-name {} \
+            --image-scanning-configuration scanOnPush=true \
+            --region $AWS_REGION
+          cat image_names | xargs -I{} docker push $REGISTRY/{}:latest
+
+      - name: Tag images with ECR prefix
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          sed -i "s|${{ needs.retrieve-project.outputs.PROJECT_NAME }}|$REGISTRY/project|g" project/kubernetes-manifest.yaml
+      
+      - name: Create VPC for EKS
+        id: eks-vpc
+        uses: aws-actions/aws-cloudformation-github-deploy@v1.0.4
+        with:
+          name: ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-stack
+          template: https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml
+          no-fail-on-empty-changeset: "1"
+
+      - name: Create Kubernetes cluster
+        id: eks-cluster
+        run: |
+
+          rawoutput=$(aws cloudformation describe-stacks --stack-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-stack |jq --raw-output '.Stacks[].Outputs[]')
+          securitygroup=$(echo $rawoutput | jq --raw-output 'select(.OutputKey == "SecurityGroups").OutputValue')
+          subnetids=$(echo $rawoutput | jq --raw-output 'select(.OutputKey == "SubnetIds").OutputValue')
+
+          aws eks create-cluster --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster --kubernetes-version 1.22 \
+          --role-arn arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/eksClusterRoleMicroflow \
+          --resources-vpc-config subnetIds=$subnetids,securityGroupIds=$securitygroup
+
+          aws eks wait cluster-active --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
+
+          aws eks create-nodegroup --cluster-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster --nodegroup-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-nodegroup \
+            --subnets $(echo $subnetids | sed 's/,/ /g') --node-role arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/microflowClusterNodeGroupsRole \
+            --scaling-config minSize=2,maxSize=3,desiredSize=3 --remote-access ec2SshKey=microflow-key-pair
+
+      - name: Deploy to Kubernetes cluster
+        run: |
+
+          aws eks wait nodegroup-active --nodegroup-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-nodegroup --cluster-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster 
+
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
+          kubectl apply -f project/kubernetes-manifest.yaml
