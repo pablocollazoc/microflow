@@ -500,11 +500,39 @@ jobs:
           gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
           --body "#### :heavy_check_mark: Docker images were updated in the Kubernetes manifest successfully"
 
-      - name: Deploy to Kubernetes cluster
-        id: deploy-k8s
-        uses: kodermax/kubectl-aws-eks@master
+      - name: Create VPC for EKS
+        id: eks-vpc
+        uses: aws-actions/aws-cloudformation-github-deploy@v1.0.4
         with:
-          args: apply -f project/kubernetes-manifest.yaml
+          name: ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-stack
+          template: https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml
+          no-fail-on-empty-changeset: "1"
+
+      - name: Create Kubernetes cluster
+        id: eks-cluster
+        run: |
+
+          rawoutput=$(aws cloudformation describe-stacks --stack-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-stack |jq --raw-output '.Stacks[].Outputs[]')
+          securitygroup=$(echo $rawoutput | jq --raw-output 'select(.OutputKey == "SecurityGroups").OutputValue')
+          subnetids=$(echo $rawoutput | jq --raw-output 'select(.OutputKey == "SubnetIds").OutputValue')
+
+          aws eks create-cluster --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster --kubernetes-version 1.22 \
+          --role-arn arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/eksClusterRoleMicroflow \
+          --resources-vpc-config subnetIds=$subnetids,securityGroupIds=$securitygroup
+
+          aws eks wait cluster-active --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
+
+          aws eks create-nodegroup --cluster-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster --nodegroup-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-nodegroup \
+            --subnets $(echo $subnetids | sed 's/,/ /g') --node-role arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/microflowClusterNodeGroupsRole \
+            --scaling-config minSize=2,maxSize=3,desiredSize=3 --remote-access ec2SshKey=microflow-key-pair
+
+      - name: Deploy to Kubernetes cluster
+        run: |
+
+          aws eks wait nodegroup-active --nodegroup-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-nodegroup --cluster-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster 
+
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
+          kubectl apply -f project/kubernetes-manifest.yaml
 
       - name: Return error
         if: ${{ always() && steps.deploy-k8s.outcome == 'failure' }}
