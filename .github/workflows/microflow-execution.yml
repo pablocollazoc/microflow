@@ -22,14 +22,22 @@ on:
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ISSUE_NUMBER: ${{ github.event.issue.number }}
+  RELEASE_REVISION: ${{ github.event.issue.number }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+  KUBE_NAMESPACE: default
 
 jobs:
   retrieve-project:
     runs-on: ubuntu-20.04
     if: contains(join(github.event.label.name, ', '), 'microflow-start')
     outputs:
-      PROJECT: ${{ steps.parsing.outputs.repo_name }}
+      PROJECT: ${{ steps.parsing.outputs.repo }}
+      PROJECT_NAME: ${{ steps.parsing.outputs.repo_name }}
       JDK: ${{ steps.parsing.outputs.jdk_version }}
+      DEPLOY: ${{ steps.parsing.outputs.deploy }}
     steps:
       - name: Get information from body
         id: parsing
@@ -41,11 +49,15 @@ jobs:
           import re
           import sys
           rawform = str(os.environ['BODY'])
-          repo_name = re.search(r"(### GitHub Repository\s*)(.*)", rawform).group(2)
+          repo = re.search(r"(### GitHub Repository\s*)(.*)", rawform).group(2)
+          repo_name = repo.split('/')[1]
           jdk_version = re.search(r"(### Java version used in the project\s*)(.*)", rawform).group(2)
+          deploy = re.search(r"(### Deploy the project\s*)(.*)", rawform).group(2)
 
+          print(f'::set-output name=repo::{repo}')
           print(f'::set-output name=repo_name::{repo_name}')
           print(f'::set-output name=jdk_version::{jdk_version}')
+          print(f'::set-output name=deploy::{deploy}')
 
       - name: Return error
         if: ${{ always() && steps.parsing.outcome == 'failure' }}
@@ -68,7 +80,7 @@ jobs:
         uses: actions/checkout@v3
         id: checkout
         with:
-          repository: ${{ steps.parsing.outputs.repo_name }}
+          repository: ${{ steps.parsing.outputs.repo }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Return error
@@ -272,7 +284,7 @@ jobs:
 
   web-update:
     runs-on: ubuntu-20.04
-    needs: [retrieve-project, sonarqube-scanner, checkstyle-spotbugs]
+    needs: [sonarqube-scanner, checkstyle-spotbugs]
     steps:
       - name: Checkout to ghpages branch
         uses: actions/checkout@v3
@@ -328,7 +340,7 @@ jobs:
 
   build-test:
     runs-on: ubuntu-20.04
-    needs: [retrieve-project, sonarqube-scanner, checkstyle-spotbugs]
+    needs: [sonarqube-scanner, checkstyle-spotbugs]
     steps:
       - name: Get project
         id: get-project
@@ -355,3 +367,189 @@ jobs:
         run: |
           gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
           --body "#### :heavy_check_mark: The project has build successfully"
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: packaged_project
+          path: .
+
+  deploy:
+    runs-on: ubuntu-20.04
+    needs: [retrieve-project, build-test]
+    if: ${{ needs.retrieve-project.outputs.DEPLOY == '- [X] yes' }}
+    steps:
+      - name: Get project
+        id: get-project
+        uses: actions/download-artifact@v3
+        with:
+          name: packaged_project
+
+      - name: Configure AWS credentials
+        id: aws-login
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Return error
+        if: ${{ always() && steps.aws-login.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :x: Could not login in AWS
+          Check the used aws credentials.
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.aws-login.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :heavy_check_mark: Logged in AWS successfully"
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Return error
+        if: ${{ always() && steps.login-ecr.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :x: Could not login in AWS ECR
+          Check the used aws credentials.
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.login-ecr.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :heavy_check_mark: Logged in AWS ECR successfully"
+
+      - name: Build Images
+        id: image-build
+        run: |
+          cd project
+          docker-compose build
+
+      - name: Return error
+        if: ${{ always() && steps.image-build.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :x: The docker images that compose the project could not be build
+          A docker-compose file is needed in the root of the project in order to build it.
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.image-build.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :heavy_check_mark: Docker images for every service were built successfully"
+
+      - name: Create ECR registries and push images
+        id: create-ecr
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          AWS_DEFAULT_REGION: $AWS_REGION
+        run: |
+          cd project
+          docker image ls -f "reference=project_*" | awk '(NR>1) { print $1 }' > image_names
+          cat image_names | xargs -I{} docker tag {} $REGISTRY/{}:latest
+          cat image_names | xargs -I{} aws ecr create-repository \
+            --repository-name {} \
+            --image-scanning-configuration scanOnPush=true \
+            --region $AWS_REGION
+          cat image_names | xargs -I{} docker push $REGISTRY/{}:latest
+
+      - name: Return error
+        if: ${{ always() && steps.create-ecr.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :x: The docker images that compose the project could not be pushed to the AWS ECR
+          Check the following requirements:
+            - The used aws credentials have rights to create AWS ECR repositories.
+            - The aws region used is the one where you want to deploy the project and the one where the cluster is located.
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.create-ecr.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :heavy_check_mark: Docker images were pushed to the private ECR registry successfully"
+
+      - name: Tag images with ECR prefix
+        id: tag-images
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          sed -i "s|${{ needs.retrieve-project.outputs.PROJECT_NAME }}|$REGISTRY/project|g" project/kubernetes-manifest.yaml
+
+      - name: Return error
+        if: ${{ always() && steps.tag-images.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :x: The docker images that use the Kubernetes manifest could not be tagged with the ECR images
+          Check the following requirements:
+            - A Kubernetes manifest using the images composed by docker-compose exist in the root of the project (the image_name:tag should be the same).
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.tag-images.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :heavy_check_mark: Docker images were updated in the Kubernetes manifest successfully"
+
+      - name: Create VPC for EKS
+        id: eks-vpc
+        uses: aws-actions/aws-cloudformation-github-deploy@v1.0.4
+        with:
+          name: ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-stack
+          template: https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml
+          no-fail-on-empty-changeset: "1"
+
+      - name: Create Kubernetes cluster
+        id: eks-cluster
+        run: |
+
+          rawoutput=$(aws cloudformation describe-stacks --stack-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-stack |jq --raw-output '.Stacks[].Outputs[]')
+          securitygroup=$(echo $rawoutput | jq --raw-output 'select(.OutputKey == "SecurityGroups").OutputValue')
+          subnetids=$(echo $rawoutput | jq --raw-output 'select(.OutputKey == "SubnetIds").OutputValue')
+
+          aws eks create-cluster --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster --kubernetes-version 1.22 \
+          --role-arn arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/eksClusterRoleMicroflow \
+          --resources-vpc-config subnetIds=$subnetids,securityGroupIds=$securitygroup
+
+          aws eks wait cluster-active --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
+
+          aws eks create-nodegroup --cluster-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster --nodegroup-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-nodegroup \
+            --subnets $(echo $subnetids | sed 's/,/ /g') --node-role arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/microflowClusterNodeGroupsRole \
+            --scaling-config minSize=2,maxSize=3,desiredSize=3 --remote-access ec2SshKey=microflow-key-pair
+
+      - name: Deploy to Kubernetes cluster
+        id: deploy-k8s
+        run: |
+
+          aws eks wait nodegroup-active --nodegroup-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-nodegroup --cluster-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
+
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
+          kubectl apply -f project/kubernetes-manifest.yaml
+
+      - name: Return error
+        if: ${{ always() && steps.deploy-k8s.outcome == 'failure' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :x: The Kubernetes manifest could not be applied
+          Check the following requirements:
+            - Check the kubernetes manifest file, that should be named, **kubernetes-manifest.yml**
+
+          See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
+
+      - name: Return success
+        if: ${{ always() && steps.deploy-k8s.outcome == 'success' }}
+        run: |
+          gh issue comment -R "${{github.repository}}" "$ISSUE_NUMBER" \
+          --body "#### :heavy_check_mark: The project was successfully deployed to the AWS EKS cluster"
+
