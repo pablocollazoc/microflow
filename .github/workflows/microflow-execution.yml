@@ -34,7 +34,8 @@ jobs:
     runs-on: ubuntu-20.04
     if: contains(join(github.event.label.name, ', '), 'microflow-start')
     outputs:
-      PROJECT: ${{ steps.parsing.outputs.repo_name }}
+      PROJECT: ${{ steps.parsing.outputs.repo }}
+      PROJECT_NAME: ${{ steps.parsing.outputs.repo_name }}
       JDK: ${{ steps.parsing.outputs.jdk_version }}
       DEPLOY: ${{ steps.parsing.outputs.deploy }}
     steps:
@@ -48,10 +49,12 @@ jobs:
           import re
           import sys
           rawform = str(os.environ['BODY'])
-          repo_name = re.search(r"(### GitHub Repository\s*)(.*)", rawform).group(2)
+          repo = re.search(r"(### GitHub Repository\s*)(.*)", rawform).group(2)
+          repo_name=$(echo $repo | cut -d '/' -f 2)
           jdk_version = re.search(r"(### Java version used in the project\s*)(.*)", rawform).group(2)
           deploy = re.search(r"(### Deploy the project\s*)(.*)", rawform).group(2)
 
+          print(f'::set-output name=repo::{repo}')
           print(f'::set-output name=repo_name::{repo_name}')
           print(f'::set-output name=jdk_version::{jdk_version}')
           print(f'::set-output name=deploy::{deploy}')
@@ -77,7 +80,7 @@ jobs:
         uses: actions/checkout@v3
         id: checkout
         with:
-          repository: ${{ steps.parsing.outputs.repo_name }}
+          repository: ${{ steps.parsing.outputs.repo }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Return error
@@ -481,8 +484,7 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          repo_name=$(echo ${{ needs.retrieve-project.outputs.PROJECT }} | cut -d '/' -f 2)
-          sed -i "s|$repo_name|$REGISTRY/project|g" project/kubernetes-manifest.yaml
+          sed -i "s|${{ needs.retrieve-project.outputs.PROJECT_NAME }}|$REGISTRY/project|g" project/kubernetes-manifest.yaml
 
       - name: Return error
         if: ${{ always() && steps.tag-images.outcome == 'failure' }}
@@ -527,9 +529,10 @@ jobs:
             --scaling-config minSize=2,maxSize=3,desiredSize=3 --remote-access ec2SshKey=microflow-key-pair
 
       - name: Deploy to Kubernetes cluster
+        id: deploy-k8s
         run: |
 
-          aws eks wait nodegroup-active --nodegroup-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-nodegroup --cluster-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster 
+          aws eks wait nodegroup-active --nodegroup-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-nodegroup --cluster-name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
 
           aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ needs.retrieve-project.outputs.PROJECT_NAME }}-cluster
           kubectl apply -f project/kubernetes-manifest.yaml
@@ -541,7 +544,6 @@ jobs:
           --body "#### :x: The Kubernetes manifest could not be applied
           Check the following requirements:
             - Check the kubernetes manifest file, that should be named, **kubernetes-manifest.yml**
-            - A **KUBE_CONFIG_DATA** should be declared as a secret in the project, in order to set the the target cluster
 
           See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details."
 
