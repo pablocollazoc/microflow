@@ -68,15 +68,7 @@ class ResultsGenerator:
         )
         self.sonar = sonar
 
-    def generate_results(self):
-
-        issues = []
-
-        component = self.sonar.components.get_project_component_and_ancestors(
-            "project")
-        project_json = json.dumps(component, indent=2)
-        project_json = json.loads(project_json)
-
+    def get_measures_values(self):
         # Get reliability measure values
         component_tree = list(
             self.sonar.measures.get_component_tree_with_specified_measures(
@@ -119,7 +111,11 @@ class ResultsGenerator:
         maintainability = json.dumps(component_tree_maintainability, indent=2)
         maintainability = json.loads(maintainability)
 
-        # Get coverage measure values
+        return reliability, security, maintainability
+
+    def get_metrics_values(self):
+      
+      # Get coverage measure values
         component_tree_coverage = list(
             self.sonar.measures.get_component_tree_with_specified_measures(
                 component="project",
@@ -147,13 +143,6 @@ class ResultsGenerator:
         duplications = json.dumps(component_tree_duplications, indent=2)
         duplications = json.loads(duplications)
 
-        # Get quality gate status
-        qualitygates_status = self.sonar.qualitygates.get_project_qualitygates_status(
-            projectKey="project"
-        )
-        quality_gate_status = json.dumps(qualitygates_status, indent=2)
-        quality_gate_status = json.loads(quality_gate_status)
-
         # Get found bugs
         bugs = list(
             self.sonar.issues.search_issues(
@@ -161,7 +150,6 @@ class ResultsGenerator:
         )
         bugs_json = json.dumps(bugs, indent=2)
         bugs_json = json.loads(bugs_json)
-        issues.append(bugs_json)
 
         # Get found code smells
         code_smells = list(
@@ -170,7 +158,6 @@ class ResultsGenerator:
         )
         code_smells_json = json.dumps(code_smells, indent=2)
         code_smells_json = json.loads(code_smells_json)
-        issues.append(code_smells_json)
 
         # Get found vulnerabilities
         vulnerabilities = list(
@@ -180,10 +167,20 @@ class ResultsGenerator:
         )
         vulnerabilities_json = json.dumps(vulnerabilities, indent=2)
         vulnerabilities_json = json.loads(vulnerabilities_json)
-        issues.append(vulnerabilities_json)
 
-        date = str(datetime.datetime.now().strftime("%Y-%m-%d"))
-        timestamp = str(time.strftime("%H_%M"))
+        return coverage, duplications, bugs_json, code_smells_json, vulnerabilities_json
+
+    def get_quality_gate_status(self):
+        # Get quality gate status
+        qualitygates_status = self.sonar.qualitygates.get_project_qualitygates_status(
+            projectKey="project"
+        )
+        quality_gate_status = json.dumps(qualitygates_status, indent=2)
+        quality_gate_status = json.loads(quality_gate_status)
+
+        return quality_gate_status
+
+    def md_file_creation(self, project_json, date, timestamp):
         mdFile = MdUtils(
             file_name=date
             + "-"
@@ -204,6 +201,9 @@ class ResultsGenerator:
             + "project"
         )
 
+        return mdFile
+
+    def write_quality_gate_status(self, mdFile, quality_gate_status):
         # Quality Gate result
         mdFile.new_header(1, "**Quality gate status:**")
         if quality_gate_status["projectStatus"]["status"] == "OK":
@@ -229,7 +229,9 @@ class ResultsGenerator:
                 "- Security hotspots reviewed is less than 100% \n"
                 "- Security rating is worse than A \n"
             )
+            return mdFile
 
+    def write_technical_debt(self, mdFile, issues):
         # Technical debt
         technical_debt = 0
         for y in range(len(issues)):
@@ -243,7 +245,9 @@ class ResultsGenerator:
         mdFile.new_header(
             1, "**Technical debt:** " + str(hour) + "h " + str(min) + "min"
         )
+        return mdFile
 
+    def issues_distribution_chart(self, bugs_json, code_smells_json, vulnerabilities_json):
         # Pie chart creation
         description = {
             "Issue type": ("string", "Issue type"),
@@ -263,7 +267,9 @@ class ResultsGenerator:
         jscode_pieChart = data_table.ToJSCode(
             "jscode_data", columns_order=("Issue type", "quantity")
         )
+        return jscode_pieChart
 
+    def reliability_chart(self, reliability):
         # Reliability chart creation
         description = {
             "file_name": ("string", "File name"),
@@ -308,7 +314,9 @@ class ResultsGenerator:
                 "bugs",
             ],
         )
+        return jscode_reliability
 
+    def security_chart(self, security):
         # Security chart creation
         description = {
             "file_name": ("string", "File name"),
@@ -355,7 +363,9 @@ class ResultsGenerator:
                 "vulnerabilities",
             ],
         )
+        return jscode_security
 
+    def maintainability_chart(self, maintainability):
         # Maintainability chart creation
         description = {
             "file_name": ("string", "File name"),
@@ -401,7 +411,9 @@ class ResultsGenerator:
                 "code_smells",
             ],
         )
+        return jscode_maintainability
 
+    def coverage_chart(self, coverage):
         # Coverage chart creation
         description = {
             "file_name": ("string", "File name"),
@@ -439,7 +451,9 @@ class ResultsGenerator:
             "jscode_data_coverage",
             ["file_name", "complexity", "coverage", "ID", "uncovered_lines"],
         )
+        return jscode_coverage
 
+    def duplications_chart(self, duplications):
         # Duplications chart creation
         description = {
             "file_name": ("string", "File name"),
@@ -483,15 +497,9 @@ class ResultsGenerator:
                 "duplicated_blocks",
             ],
         )
+        return jscode_duplications
 
-        charts = open(date + "-" + timestamp + "-charts.html", "w+")
-        charts.write(page_template % vars())
-        charts.close()
-
-        mdFile.new_paragraph(
-            "{% include " + date + "-" + timestamp + "-charts.html" + "%}"
-        )
-
+    def issues_tables_creation(self, mdFile, issues):
         # Issues found table creation
         for y in range(len(issues)):
             if y == 0:
@@ -540,6 +548,50 @@ class ResultsGenerator:
                 text=list_of_strings,
                 text_align="center",
             )
+        return mdFile
+
+    def generate_results(self):
+
+        issues = []
+        date = str(datetime.datetime.now().strftime("%Y-%m-%d"))
+        timestamp = str(time.strftime("%H_%M"))
+
+        component = self.sonar.components.get_project_component_and_ancestors(
+            "project")
+        project_json = json.dumps(component, indent=2)
+        project_json = json.loads(project_json)
+
+        reliability, security, maintainability = self.get_measures_values()
+
+        coverage, duplications, bugs_json, code_smells_json, vulnerabilities_json = self.get_metrics_values()
+
+        issues.append(bugs_json)
+        issues.append(code_smells_json)
+        issues.append(vulnerabilities_json)
+
+        quality_gate_status = self.get_quality_gate_status()
+
+        mdFile = self.md_file_creation(project_json, date, timestamp)
+
+        mdFile = self.write_quality_gate_status(mdFile, quality_gate_status)
+        mdFile = self.write_technical_debt(mdFile, issues)
+
+        jscode_pieChart = self.issues_distribution_chart(bugs_json, code_smells_json, vulnerabilities_json)
+        jscode_reliability = self.reliability_chart(reliability)
+        jscode_security = self.security_chart(security)
+        jscode_maintainability = self.maintainability_chart(maintainability)
+        jscode_coverage = self.coverage_chart(coverage)
+        jscode_duplications = self.duplications_chart(duplications)
+
+        charts = open(date + "-" + timestamp + "-charts.html", "w+")
+        charts.write(page_template % vars())
+        charts.close()
+
+        mdFile.new_paragraph(
+            "{% include " + date + "-" + timestamp + "-charts.html" + "%}"
+        )
+
+        mdFile = self.issues_tables_creation(mdFile, issues)
 
         mdFile.create_md_file()
 
